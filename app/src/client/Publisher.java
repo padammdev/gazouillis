@@ -52,22 +52,25 @@ public class Publisher {
         client.write(buffer);
         buffer.clear();
         buffer.flip();
-        Thread.sleep(100);
 
-        /*** receive message ***/
-        client.read(buffer);
-        String response = new String((buffer.array())).trim();
-        System.out.println(response);
+        while(true) {
+            Thread.sleep(1000);
 
-        /*** Close connexion ***/
-        if(new String(buffer.array()).trim().equals(ERROR) || new String(buffer.array()).trim().equals(OK)) {
-            buffer.clear();
-            buffer.flip();
-            message = "!QUIT";
-            buffer = ByteBuffer.wrap(message.getBytes());
-            client.write(buffer);
-            System.out.println("Closing Connexion");
+            /*** receive message ***/
+            client.read(buffer);
+            String response = new String((buffer.array())).trim();
+            System.out.println(response);
+
+            /*** Close connexion ***/
+            if (new String(buffer.array()).trim().equals(ERROR) || new String(buffer.array()).trim().equals(OK)) {
+                buffer.clear();
+                buffer.flip();
+                message = "!QUIT";
+                buffer = ByteBuffer.wrap(message.getBytes());
+                client.write(buffer);
+                System.out.println("Closing Connexion");
+                break;
+            }
         }
-
     }
 }
