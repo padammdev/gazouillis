@@ -65,9 +65,6 @@ public class SimpleServer {
                             /*** PUBLISH ***/
 
                             case "PUBLISH":
-                                if (new String(buffer.array()).trim().equals(POISON_PILL)) {
-                                    client.close();
-                                    System.out.println("Closing connexion");}
 
                                 HashMap<String, String> command = Parser.parsePublish(result);
                                 User author = new User(command.get("author"));
@@ -114,6 +111,9 @@ public class SimpleServer {
                                 buffer.clear();
                                 break;
                         }
+                        if (new String(buffer.array()).trim().equals(POISON_PILL)) {
+                            client.close();
+                            System.out.println("Closing connexion");}
 
                         if (key.attachment() == null) {
                             key.attach(1);
