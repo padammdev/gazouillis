@@ -73,9 +73,9 @@ public class SimpleServer {
                                 Message message = new Message(command.get("core"), id, author);
                                 messages.add(message);
                                 System.out.println(message.getCore());
-                                buffer = ByteBuffer.wrap(OK.getBytes());
+                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
                                 client.write(buffer);
-                                buffer.clear();
+                                System.out.println(new String((buffer.array())).trim());
                                 break;
 
                             /*** RCV_IDS ***/
@@ -90,7 +90,6 @@ public class SimpleServer {
                                         ).getBytes()
                                 );
                                 client.write(buffer);
-                                buffer.clear();
                                 break;
 
                             case "RCV_MSG":
@@ -102,15 +101,14 @@ public class SimpleServer {
                                     buffer = ByteBuffer.wrap(responseMSG(id_msg).getBytes());
                                 }
                                 client.write(buffer);
-                                buffer.clear();
 
                                 break;
                             default:
                                 buffer = ByteBuffer.wrap((ERROR+"Unknown command\r\n").getBytes());
                                 client.write(buffer);
-                                buffer.clear();
                                 break;
                         }
+                        buffer.clear();
                         if (new String(buffer.array()).trim().equals(POISON_PILL)) {
                             client.close();
                             System.out.println("Closing connexion");}

@@ -8,22 +8,19 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Scanner;
 
 public class Publisher {
     static final String ERROR = "ERROR";
-    static final String OK = "OK";
+    static final String OK = "OK\r\n";
 
     static String username;
     static String message;
     public static void main(String[] args) throws IOException, InterruptedException {
-        if(args.length <=0 || args[0] == null || args[1] == null){
-            throw new InvalidParameterException("Usage : java Publisher address port");
-        }
-
         Scanner scanner = new Scanner(System.in);
-        InetAddress address = InetAddress.getByName(args[0]);
-        int port = Integer.parseInt(args[1]);
+        InetAddress address = InetAddress.getByName("localhost");
+        int port = 12345;
         SocketChannel client =  SocketChannel.open(new InetSocketAddress(address, port));
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         client.configureBlocking(true);
@@ -50,21 +47,20 @@ public class Publisher {
         message= "PUBLISH author:"+username+"\r\n"+message+"\r\n";
         buffer = ByteBuffer.wrap(message.getBytes());
         client.write(buffer);
-        buffer.clear();
         buffer.flip();
-
+        buffer.clear();
+        System.out.println(new String((buffer.array())).trim());
         while(true) {
             Thread.sleep(1000);
-
             /*** receive message ***/
             client.read(buffer);
             String response = new String((buffer.array())).trim();
             System.out.println(response);
 
             /*** Close connexion ***/
-            if (new String(buffer.array()).trim().equals(ERROR) || new String(buffer.array()).trim().equals(OK)) {
-                buffer.clear();
+            if (response.equals(ERROR) || response.equals(OK)) {
                 buffer.flip();
+                buffer.clear();
                 message = "!QUIT";
                 buffer = ByteBuffer.wrap(message.getBytes());
                 client.write(buffer);
