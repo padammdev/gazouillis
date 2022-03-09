@@ -15,7 +15,8 @@ public class SimpleServer {
     static ArrayList<Long> msg_ids = new ArrayList<>();
     static final String POISON_PILL = "!QUIT";
     static ArrayList<Message> messages = new ArrayList<>();
-    //    static ArrayList<User> users = new ArrayList<>();
+    static HashMap<User, List<Message>> user_messages = new HashMap<>();
+    //static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
 
     static String ERROR = "ERROR : ";
@@ -56,8 +57,6 @@ public class SimpleServer {
                         buffer.flip();
                         String result = new String((buffer.array())).trim(); // trim() retuourne une copie du message +
                         //System.out.println(result);
-
-
                         String type = Parser.getCommandType(result);
 
                         switch (type) {
@@ -71,7 +70,9 @@ public class SimpleServer {
                                 long id = generateID();
                                 System.out.println("Message id: " + id + " from " + command.get("author"));
                                 Message message = new Message(command.get("core"), id, author);
-                                messages.add(message);
+                                user_messages.computeIfAbsent(author, m -> new ArrayList<>()).add(message);
+
+                                //messages.add(message);
                                 System.out.println(message.getCore());
                                 buffer = ByteBuffer.wrap("OK\r\n".getBytes());
                                 client.write(buffer);
@@ -83,10 +84,10 @@ public class SimpleServer {
                             case "RCV_IDS":
                                 command = Parser.parseRCVIDS(result);
                                 buffer = ByteBuffer.wrap(responseMSGIDS(
-                                                command.get("author"),
-                                                command.get("tag"),
-                                                command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
-                                                command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
+                                        command.get("author"),
+                                        command.get("tag"),
+                                        command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
+                                        command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
                                         ).getBytes()
                                 );
                                 client.write(buffer);
@@ -95,23 +96,24 @@ public class SimpleServer {
                             case "RCV_MSG":
                                 command = Parser.parseRCVMSG(result);
                                 long id_msg = Long.parseLong(command.get("Msg_id"));
-                                if (!msg_ids.contains(id_msg)){
-                                    buffer = ByteBuffer.wrap((ERROR+"Unknown message id\r\n").getBytes());
-                                }else{
+                                if (!msg_ids.contains(id_msg)) {
+                                    buffer = ByteBuffer.wrap((ERROR + "Unknown message id\r\n").getBytes());
+                                } else {
                                     buffer = ByteBuffer.wrap(responseMSG(id_msg).getBytes());
                                 }
                                 client.write(buffer);
 
                                 break;
                             default:
-                                buffer = ByteBuffer.wrap((ERROR+"Unknown command\r\n").getBytes());
+                                buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);
                                 break;
                         }
                         buffer.clear();
                         if (new String(buffer.array()).trim().equals(POISON_PILL)) {
                             client.close();
-                            System.out.println("Closing connexion");}
+                            System.out.println("Closing connexion");
+                        }
 
                         if (key.attachment() == null) {
                             key.attach(1);
