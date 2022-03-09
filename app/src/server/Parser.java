@@ -11,7 +11,6 @@ public class Parser {
         String core = command_split.length >1? command_split[1]: "";
 
         parsedCommand.put("Type", header[0]);
-        if (header.length<2) throw new Error("No author specified");
         parsedCommand.put("author", header[1].substring(header[1].indexOf("@")));
 
         parsedCommand.put("core", core);
@@ -36,7 +35,6 @@ public class Parser {
         HashMap<String, String> parsedCommand = new HashMap<>();
         String[] command_split = command.split("\r\n");
         String[] header = command_split[0].split(" ");
-        if(! header[1].contains("msg_id:")) throw new Error("No id specified");
         parsedCommand.put("Type", header[0]);
         parsedCommand.put("Msg_id", header[1].substring(header[1].indexOf(":")+1));
         return parsedCommand;

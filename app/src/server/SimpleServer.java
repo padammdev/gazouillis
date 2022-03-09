@@ -18,6 +18,9 @@ public class SimpleServer {
     //    static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
 
+    static String ERROR = "ERROR : ";
+    static String OK = "OK\r\n";
+
     public static void main(String[] arg) throws IOException, IOException {
         Selector selector = Selector.open();
         ServerSocketChannel ssc = ServerSocketChannel.open();
@@ -69,7 +72,7 @@ public class SimpleServer {
                                 Message message = new Message(command.get("core"), id, author);
                                 messages.add(message);
                                 System.out.println(message.getCore());
-                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
+                                buffer = ByteBuffer.wrap(OK.getBytes());
                                 client.write(buffer);
                                 buffer.clear();
                                 break;
@@ -92,8 +95,17 @@ public class SimpleServer {
                             case "RCV_MSG":
                                 command = Parser.parseRCVMSG(result);
                                 long id_msg = Long.parseLong(command.get("Msg_id"));
-                                if (!msg_ids.contains(id_msg)) throw new Error("Wrong id");
-                                buffer = ByteBuffer.wrap(responseMSG(id_msg).getBytes());
+                                if (!msg_ids.contains(id_msg)){
+                                    buffer = ByteBuffer.wrap((ERROR+"Unknown message id\r\n").getBytes());
+                                }else{
+                                    buffer = ByteBuffer.wrap(responseMSG(id_msg).getBytes());
+                                }
+                                client.write(buffer);
+                                buffer.clear();
+
+                                break;
+                            default:
+                                buffer = ByteBuffer.wrap((ERROR+"Unknown command\r\n").getBytes());
                                 client.write(buffer);
                                 buffer.clear();
                                 break;
