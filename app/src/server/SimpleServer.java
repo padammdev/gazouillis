@@ -11,19 +11,19 @@ import java.nio.channels.*;
 
 public class SimpleServer {
 
-    static ArrayList<Long> msg_ids = new ArrayList<>();
-    static HashMap<Long,String> list_id_message = new HashMap<>();
+    static ArrayList<Long> msgIds = new ArrayList<>();
+    static HashMap<Long, Message> idMessage = new HashMap<>();
     static final String POISON_PILL = "!QUIT";
     static ArrayList<Message> messages = new ArrayList<>();
-    static HashMap<User, List<Message>> user_messages = new HashMap<>();
+    static HashMap<User, List<Long>> userMessages = new HashMap<>();
     //static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
-    static HashMap<User, List<User> > list_of_followers = new HashMap<>();
+    static HashMap<User, List<User>> listOfFollowers = new HashMap<>();
 
     static String ERROR = "ERROR : ";
     static String OK = "OK\r\n";
 
-    public static void main(String[] arg) throws IOException, IOException {
+    public static void main(String[] arg) throws IOException {
         Selector selector = Selector.open();
         ServerSocketChannel ssc = ServerSocketChannel.open();
         InetSocketAddress localhost = new InetSocketAddress("localhost", 12345);
@@ -53,10 +53,18 @@ public class SimpleServer {
                 } else if (key.isReadable()) {
                     SocketChannel client = (SocketChannel) key.channel();
                     ByteBuffer buffer = ByteBuffer.allocate(1024);
-                    if (client.read(buffer) <= 0) key.cancel();
+                    if (client.read(buffer) <= 0){
+                        key.cancel();
+                    }
                     else {
                         buffer.flip();
-                        String result = new String((buffer.array())).trim(); // trim() retuourne une copie du message +
+                        String result = new String(buffer.array()).trim();
+                        System.out.println("Request :" + result);
+                        if (result.equals(POISON_PILL)) {
+                            client.close();
+                            System.out.println("Closing connexion");
+                            continue;
+                        }
                         String type = Parser.getCommandType(result);
 
                         switch (type) {
@@ -72,20 +80,19 @@ public class SimpleServer {
                                 Message message = new Message(command.get("core"), id, author);
 
                                 /*** add messages for each user ***/
-                                if(!users.contains(author)){
+                                if (!users.contains(author)) {
                                     users.add(author);
-                                    user_messages.computeIfAbsent(author, m -> new ArrayList<>()).add(message);
-                                    System.out.println(user_messages.toString());
+                                    userMessages.computeIfAbsent(author, m -> new ArrayList<>()).add(id);
+                                    System.out.println(userMessages.toString());
                                 }
 
                                 /*** add id for each message ***/
-                                list_id_message.put(message.getId(),message.getCore());
-                                //list_id_message.computeIfAbsent(id, m -> message.getCore());
-                                System.out.println(list_id_message);
+                                idMessage.put(id, message);
+                                System.out.println(idMessage);
 
                                 //messages.add(message);
                                 System.out.println(message.getCore());
-                                buffer = ByteBuffer.wrap("OK\r\n\r\n".getBytes());
+                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
                                 client.write(buffer);
                                 System.out.println(new String((buffer.array())).trim());
                                 break;
@@ -94,11 +101,17 @@ public class SimpleServer {
 
                             case "RCV_IDS":
                                 command = Parser.parseRCVIDS(result);
-                                buffer = ByteBuffer.wrap(responseMSGIDS(
+                                System.out.println(responseMSGIDS(
                                         command.get("author"),
                                         command.get("tag"),
                                         command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
                                         command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
+                                ));
+                                buffer = ByteBuffer.wrap(responseMSGIDS(
+                                                command.get("author"),
+                                                command.get("tag"),
+                                                command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
+                                                command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
                                         ).getBytes()
                                 );
                                 client.write(buffer);
@@ -106,17 +119,18 @@ public class SimpleServer {
 
                             case "RCV_MSG":
                                 command = Parser.parseRCVMSG(result);
-                                long id_msg = Long.parseLong(command.get("Msg_id"));
-                                if (!msg_ids.contains(id_msg)) {
-                                    buffer = ByteBuffer.wrap((ERROR + "Unknown message id\r\n").getBytes());
+                                long idMsg = Long.parseLong(command.get("Msg_id"));
+                                if (!idMessage.containsKey(idMsg)) {
+                                    System.out.println(ERROR + "Unknown message id : " +idMsg+ "\r\n");
+                                    buffer = ByteBuffer.wrap((ERROR + "Unknown message id : " +idMsg+ "\r\n").getBytes());
                                 } else {
                                     //list_id_message.put(id_msg,message.getCore());
-                                    buffer = ByteBuffer.wrap(responseMSG(id_msg).getBytes());
+                                    buffer = ByteBuffer.wrap(responseMSG(idMsg).getBytes());
                                 }
                                 client.write(buffer);
 
                                 break;
-                            case "FOLLOW" :
+                            case "FOLLOW":
                                 /* ex : FOLLOW User1 UserFollowed
                                 command = Parser.parseFollow(result);
                                 User user = Parser.getFirstUser();
@@ -133,10 +147,6 @@ public class SimpleServer {
                         }
 
                         buffer.clear();
-                        if (new String(buffer.array()).trim().equals(POISON_PILL)) {
-                            client.close();
-                            System.out.println("Closing connexion");
-                        }
 
                         if (key.attachment() == null) {
                             key.attach(1);
@@ -153,18 +163,26 @@ public class SimpleServer {
 
 
     }
+
     /*
     public static String send_message_from_user(User user){
         String messages;
         for (int i=0 ; i< )
     }
     */
-    public static HashMap<User,List<Message>> list_of_messages(Message message){
-        if(!users.contains(message.getAuthor())){
+    /*public static HashMap<User, List<Long>> listOfMessages(Message message) {
+        if (!users.contains(message.getAuthor())) {
             users.add(message.getAuthor());
-            user_messages.computeIfAbsent(message.getAuthor(), m -> new ArrayList<>()).add(message);
+            userMessages.computeIfAbsent(message.getAuthor(), m -> new ArrayList<>()).add(message.getId());
         }
-        return user_messages;
+        return userMessages;
+    }*/
+
+    public static List<Long> getMsgIds (String author){
+        for(User user : userMessages.keySet()){
+            if (user.getUsername().equals(author)) return userMessages.get(user);
+        }
+        return null;
     }
 
     public static long generateID() {
@@ -173,35 +191,40 @@ public class SimpleServer {
 
     public static String responseMSGIDS(String author, String tag, long id, int limit) {
         StringBuilder response = new StringBuilder("MSG_IDS\r\n");
-        ArrayList<Long> ids = new ArrayList<>();
-        int limitN = 0;
-        System.out.println(author);
-        for (Message message : messages) {
-            if (message.hasAuthor(author) && message.hasTag(tag) && message.getId() >= id) {
-                ids.add(message.getId());
-                limitN++;
+        List<Long> ids = new ArrayList<>();
+        List<Long> selected;
+        if((selected = getMsgIds(author)) != null){
+            for(long selectedId : selected){
+                if(selectedId>=id && idMessage.get(selectedId).hasTag(tag)) ids.add(selectedId);
             }
-            if (limitN >= limit) break;
+        }else{
+            List<Long> finalIds = ids;
+            idMessage.forEach((key, value)->{
+                if (value.hasTag(tag) && key >= id) {
+                    finalIds.add(key);
+                }
+            });
         }
+
         ids.sort(Collections.reverseOrder());
+        ids = ids.size()>=limit? ids.subList(0, limit) : ids;
         for (long ID : ids) {
-            response.append(ID).append("\n");
+            response.append(ID).append("\r\n");
         }
         return response.toString();
     }
 
     public static String responseMSG(long id) {
         StringBuilder response = new StringBuilder(("MSG\r\n"));
-        for (Message message : messages) {
-            if (message.getId() == id) {
-                response.append("author:")
-                        .append(message.getAuthor().getUsername())
-                        .append(" msg_id:")
-                        .append(id)
-                        .append("\r\n");
-                response.append(message.getCore());
-            }
-        }
+        Message message = idMessage.get(id);
+        response.append("author:")
+                .append(message.getAuthor().getUsername())
+                .append(" msg_id:")
+                .append(id)
+                .append("\r\n");
+        response.append(message.getCore());
+
+
         return response.toString();
     }
 
