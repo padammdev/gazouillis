@@ -6,18 +6,19 @@ import data.User;
 import java.io.IOException;
 import java.net.*;
 import java.nio.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.nio.channels.*;
 
 public class SimpleServer {
 
     static ArrayList<Long> msg_ids = new ArrayList<>();
+    static HashMap<Long,String> list_id_message = new HashMap<>();
     static final String POISON_PILL = "!QUIT";
     static ArrayList<Message> messages = new ArrayList<>();
     static HashMap<User, List<Message>> user_messages = new HashMap<>();
     //static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
+    static HashMap<User, List<User> > list_of_followers = new HashMap<>();
 
     static String ERROR = "ERROR : ";
     static String OK = "OK\r\n";
@@ -56,7 +57,6 @@ public class SimpleServer {
                     else {
                         buffer.flip();
                         String result = new String((buffer.array())).trim(); // trim() retuourne une copie du message +
-                        //System.out.println(result);
                         String type = Parser.getCommandType(result);
 
                         switch (type) {
@@ -70,11 +70,22 @@ public class SimpleServer {
                                 long id = generateID();
                                 System.out.println("Message id: " + id + " from " + command.get("author"));
                                 Message message = new Message(command.get("core"), id, author);
-                                user_messages.computeIfAbsent(author, m -> new ArrayList<>()).add(message);
+
+                                /*** add messages for each user ***/
+                                if(!users.contains(author)){
+                                    users.add(author);
+                                    user_messages.computeIfAbsent(author, m -> new ArrayList<>()).add(message);
+                                    System.out.println(user_messages.toString());
+                                }
+
+                                /*** add id for each message ***/
+                                list_id_message.put(message.getId(),message.getCore());
+                                //list_id_message.computeIfAbsent(id, m -> message.getCore());
+                                System.out.println(list_id_message);
 
                                 //messages.add(message);
                                 System.out.println(message.getCore());
-                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
+                                buffer = ByteBuffer.wrap("OK\r\n\r\n".getBytes());
                                 client.write(buffer);
                                 System.out.println(new String((buffer.array())).trim());
                                 break;
@@ -99,16 +110,28 @@ public class SimpleServer {
                                 if (!msg_ids.contains(id_msg)) {
                                     buffer = ByteBuffer.wrap((ERROR + "Unknown message id\r\n").getBytes());
                                 } else {
+                                    //list_id_message.put(id_msg,message.getCore());
                                     buffer = ByteBuffer.wrap(responseMSG(id_msg).getBytes());
                                 }
                                 client.write(buffer);
 
                                 break;
+                            case "FOLLOW" :
+                                /* ex : FOLLOW User1 UserFollowed
+                                command = Parser.parseFollow(result);
+                                User user = Parser.getFirstUser();
+                                User user2 = Parser.getUserfollowed();
+                                list_of_followers.put(user, m -> new ArrayList<>()).add(user2);
+                                System.out.println(user.getUsername() + " follow " + user2.getUsername());
+                                */
+                                break;
+
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);
                                 break;
                         }
+
                         buffer.clear();
                         if (new String(buffer.array()).trim().equals(POISON_PILL)) {
                             client.close();
@@ -129,6 +152,19 @@ public class SimpleServer {
         }
 
 
+    }
+    /*
+    public static String send_message_from_user(User user){
+        String messages;
+        for (int i=0 ; i< )
+    }
+    */
+    public static HashMap<User,List<Message>> list_of_messages(Message message){
+        if(!users.contains(message.getAuthor())){
+            users.add(message.getAuthor());
+            user_messages.computeIfAbsent(message.getAuthor(), m -> new ArrayList<>()).add(message);
+        }
+        return user_messages;
     }
 
     public static long generateID() {
@@ -167,7 +203,6 @@ public class SimpleServer {
             }
         }
         return response.toString();
-
     }
 
 
