@@ -101,12 +101,6 @@ public class SimpleServer {
 
                             case "RCV_IDS":
                                 command = Parser.parseRCVIDS(result);
-                                System.out.println(responseMSGIDS(
-                                        command.get("author"),
-                                        command.get("tag"),
-                                        command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
-                                        command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
-                                ));
                                 buffer = ByteBuffer.wrap(responseMSGIDS(
                                                 command.get("author"),
                                                 command.get("tag"),
@@ -121,10 +115,10 @@ public class SimpleServer {
                                 command = Parser.parseRCVMSG(result);
                                 long idMsg = Long.parseLong(command.get("Msg_id"));
                                 if (!idMessage.containsKey(idMsg)) {
-                                    System.out.println(ERROR + "Unknown message id : " +idMsg+ "\r\n");
                                     buffer = ByteBuffer.wrap((ERROR + "Unknown message id : " +idMsg+ "\r\n").getBytes());
                                 } else {
                                     //list_id_message.put(id_msg,message.getCore());
+                                    System.out.println(responseMSG(idMsg));
                                     buffer = ByteBuffer.wrap(responseMSG(idMsg).getBytes());
                                 }
                                 client.write(buffer);

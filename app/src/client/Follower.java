@@ -1,6 +1,15 @@
 package client;
 
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.SocketChannel;
+import java.util.Arrays;
 import java.util.Scanner;
+
+import static client.Client.ERROR;
+import static client.Client.MSG_IDS;
 
 public class Follower implements ClientAction {
 
@@ -8,6 +17,66 @@ public class Follower implements ClientAction {
 
     public Follower(String username) {
         this.username = username;
+    }
+
+    public void run() throws IOException, InterruptedException {
+        InetAddress address = InetAddress.getByName("localhost");
+        int port = 12345;
+        SocketChannel client = SocketChannel.open(new InetSocketAddress(address, port));
+        ByteBuffer buffer;
+        client.configureBlocking(true);
+
+        while (true) {
+            boolean hasErrors = false;
+            String command = this.getCommand();
+            for (String request : command.split("\r\n")) {
+                buffer = ByteBuffer.wrap(request.getBytes());
+                client.write(buffer);
+                buffer.clear();
+                Thread.sleep(500);
+                client.read(buffer);
+                String response = new String(buffer.array(), 0, buffer.position());
+                buffer.flip();
+                buffer.clear();
+                System.out.println(response);
+                /*** Handle errors ***/
+                if (response.contains(ERROR)) {
+                    hasErrors = true;
+                    break;
+                }
+
+                /*** Handle MSG_IDS Response ***/
+                if (response.contains(MSG_IDS)) {
+                    String[] parsedResponse = response.split("\r\n");
+                    for (int i = 1; i < parsedResponse.length; i++) {
+                        String rcvRequest = "RCV_MSG msg_id:" + parsedResponse[i];
+                        buffer = ByteBuffer.wrap(rcvRequest.getBytes());
+                        client.write(buffer);
+                        buffer.clear();
+                        Thread.sleep(500);
+                        client.read(buffer);
+                        String msgResponse = new String(buffer.array(), 0, buffer.position());
+                        buffer.flip();
+                        buffer.clear();
+                        System.out.println(msgResponse);
+                        /*** Handle errors ***/
+                        if (msgResponse.contains(ERROR)) {
+                            hasErrors = true;
+                            break;
+                        }
+                    }
+                }
+
+            }
+            if (!hasErrors) {
+                String message = "!QUIT";
+                buffer = ByteBuffer.wrap(message.getBytes());
+                client.write(buffer);
+                System.out.println("Closing Connexion");
+                break;
+            }
+        }
+
     }
 
     @Override
