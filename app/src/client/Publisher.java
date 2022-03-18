@@ -47,10 +47,7 @@ public class Publisher implements ClientAction {
             buffer.flip();
             buffer.clear();
 
-            /*** Handle errors ***/
-            if (response.contains(ERROR)){
-                System.out.println(response);
-            }
+            System.out.println(response);
 
             /*** Close connexion ***/
             if (response.contains(OK)) {

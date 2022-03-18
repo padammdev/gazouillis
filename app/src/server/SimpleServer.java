@@ -19,6 +19,7 @@ public class SimpleServer {
     //static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
     static HashMap<User, List<User>> listOfFollowers = new HashMap<>();
+    static long lastId = 0;
 
     static String ERROR = "ERROR : ";
     static String OK = "OK\r\n";
@@ -80,15 +81,18 @@ public class SimpleServer {
                                 Message message = new Message(command.get("core"), id, author);
 
                                 /*** add messages for each user ***/
-                                if (!users.contains(author)) {
-                                    users.add(author);
-                                    userMessages.computeIfAbsent(author, m -> new ArrayList<>()).add(id);
-                                    System.out.println(userMessages.toString());
-                                }
+                                    //users.add(author);
+                                /*if(userMessages.get(author)==null){
+                                    System.out.println("Creating entry in userMessage map for user : "+author);
+                                    userMessages.put(author, new ArrayList<>());
+                                }*/
+                                if(! isAuthorRegistered(author)) userMessages.put(author, new ArrayList<>());
+                                userMessages.get(author).add(id);
+                                System.out.println(userMessages);
 
                                 /*** add id for each message ***/
                                 idMessage.put(id, message);
-                                System.out.println(idMessage);
+                                //System.out.println(idMessage);
 
                                 //messages.add(message);
                                 System.out.println(message.getCore());
@@ -180,7 +184,7 @@ public class SimpleServer {
     }
 
     public static long generateID() {
-        return messages.isEmpty() ? 1 : messages.get(messages.size() - 1).getId() + 1;
+        return ++lastId;
     }
 
     public static String responseMSGIDS(String author, String tag, long id, int limit) {
@@ -220,6 +224,12 @@ public class SimpleServer {
 
 
         return response.toString();
+    }
+    public static boolean isAuthorRegistered(User author){
+        for(User user:userMessages.keySet()){
+            if(user.equals(author)) return true;
+        }
+        return false;
     }
 
 

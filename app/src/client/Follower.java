@@ -23,20 +23,24 @@ public class Follower implements ClientAction {
         InetAddress address = InetAddress.getByName("localhost");
         int port = 12345;
         SocketChannel client = SocketChannel.open(new InetSocketAddress(address, port));
-        ByteBuffer buffer;
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
         client.configureBlocking(true);
 
         while (true) {
             boolean hasErrors = false;
             String command = this.getCommand();
             for (String request : command.split("\r\n")) {
-                buffer = ByteBuffer.wrap(request.getBytes());
-                client.write(buffer);
-                buffer.clear();
-                Thread.sleep(500);
-                client.read(buffer);
-                String response = new String(buffer.array(), 0, buffer.position());
+
+                buffer.put(request.getBytes());
                 buffer.flip();
+                client.write(buffer);
+
+                buffer.clear();
+                //Thread.sleep(500);
+
+                client.read(buffer);
+                buffer.flip();
+                String response = new String(buffer.array(), buffer.position(), buffer.limit());
                 buffer.clear();
                 System.out.println(response);
                 /*** Handle errors ***/
@@ -50,13 +54,16 @@ public class Follower implements ClientAction {
                     String[] parsedResponse = response.split("\r\n");
                     for (int i = 1; i < parsedResponse.length; i++) {
                         String rcvRequest = "RCV_MSG msg_id:" + parsedResponse[i];
-                        buffer = ByteBuffer.wrap(rcvRequest.getBytes());
+                        buffer.put(rcvRequest.getBytes());
+                        buffer.flip();
                         client.write(buffer);
                         buffer.clear();
-                        Thread.sleep(500);
+
+
                         client.read(buffer);
-                        String msgResponse = new String(buffer.array(), 0, buffer.position());
                         buffer.flip();
+                        String msgResponse = new String(buffer.array(), buffer.position(), buffer.limit());
+
                         buffer.clear();
                         System.out.println(msgResponse);
                         /*** Handle errors ***/
