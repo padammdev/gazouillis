@@ -12,8 +12,12 @@ import static client.Client.OK;
 
 public class Publisher implements ClientAction {
     String username;
-    public Publisher(String username) {
+    ByteBuffer buffer;
+    SocketChannel client;
+    public Publisher(String username, ByteBuffer buffer, SocketChannel client) {
         this.username = username;
+        this.buffer = buffer;
+        this.client = client;
     }
 
     @Override
@@ -30,11 +34,6 @@ public class Publisher implements ClientAction {
 
     @Override
     public void run() throws IOException {
-        InetAddress address = InetAddress.getByName("localhost");
-        int port = 12345;
-        SocketChannel client = SocketChannel.open(new InetSocketAddress(address, port));
-        ByteBuffer buffer;
-        client.configureBlocking(true);
         while(true){
             String message = this.getCommand();
             buffer = ByteBuffer.wrap(message.getBytes());
@@ -51,10 +50,6 @@ public class Publisher implements ClientAction {
 
             /*** Close connexion ***/
             if (response.contains(OK)) {
-                message = "!QUIT";
-                buffer = ByteBuffer.wrap(message.getBytes());
-                client.write(buffer);
-                System.out.println("Closing Connexion");
                 break;
             }
         }

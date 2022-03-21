@@ -6,9 +6,9 @@ import java.util.HashMap;
 public class Parser {
     public static HashMap<String, String> parsePublish(String command){
         HashMap<String, String> parsedCommand = new HashMap<>();
-        String[] command_split = command.split("\r\n");
-        String[] header = command_split[0].split(" ");
-        String core = command_split.length >1? command_split[1]: "";
+        String[] commandSplit = command.split("\r\n");
+        String[] header = commandSplit[0].split(" ");
+        String core = commandSplit.length >1? commandSplit[1]: "";
 
         parsedCommand.put("Type", header[0]);
         parsedCommand.put("author", header[1].substring(header[1].indexOf("@")));
@@ -19,8 +19,8 @@ public class Parser {
     }
     public static HashMap<String, String> parseRCVIDS(String command){
         HashMap<String, String> parsedCommand = new HashMap<>();
-        String[] command_split = command.split("\r\n");
-        String[] header = command_split[0].split(" ");
+        String[] commandSplit = command.split("\r\n");
+        String[] header = commandSplit[0].split(" ");
         parsedCommand.put("Type", header[0]);
         for(String option : header){
             parsedCommand.put("author", option.contains("author") ? option.substring(option.indexOf("@")) : null);
@@ -33,8 +33,8 @@ public class Parser {
     }
     public static HashMap<String, String> parseRCVMSG(String command){
         HashMap<String, String> parsedCommand = new HashMap<>();
-        String[] command_split = command.split("\r\n");
-        String[] header = command_split[0].split(" ");
+        String[] commandSplit = command.split("\r\n");
+        String[] header = commandSplit[0].split(" ");
         parsedCommand.put("Type", header[0]);
         parsedCommand.put("Msg_id", header[1].substring(header[1].indexOf(":")+1));
         return parsedCommand;
@@ -42,5 +42,14 @@ public class Parser {
 
     public static String getCommandType(String command){
         return command.split("\r\n")[0].split(" ")[0];
+    }
+
+    public static HashMap<String, String> parseRegister(String command){
+        HashMap<String, String > parsedCommand = new HashMap<>();
+        String[] commandSplit = command.split("\r\n");
+        String[] header = commandSplit[0].split(" ");
+        parsedCommand.put("Type", header[0]);
+        parsedCommand.put("username", header[1].substring(header[1].indexOf("@")));
+        return parsedCommand;
     }
 }

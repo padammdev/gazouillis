@@ -14,17 +14,16 @@ import static client.Client.MSG_IDS;
 public class Follower implements ClientAction {
 
     String username;
+    ByteBuffer buffer;
+    SocketChannel client;
 
-    public Follower(String username) {
+    public Follower(String username, ByteBuffer buffer, SocketChannel client) {
         this.username = username;
+        this.buffer = buffer;
+        this.client = client;
     }
 
     public void run() throws IOException, InterruptedException {
-        InetAddress address = InetAddress.getByName("localhost");
-        int port = 12345;
-        SocketChannel client = SocketChannel.open(new InetSocketAddress(address, port));
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
-        client.configureBlocking(true);
 
         while (true) {
             boolean hasErrors = false;
@@ -76,10 +75,6 @@ public class Follower implements ClientAction {
 
             }
             if (!hasErrors) {
-                String message = "!QUIT";
-                buffer = ByteBuffer.wrap(message.getBytes());
-                client.write(buffer);
-                System.out.println("Closing Connexion");
                 break;
             }
         }

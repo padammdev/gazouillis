@@ -2,10 +2,12 @@ package server;
 
 import data.Message;
 import data.User;
+import data.UserDB;
 
 import java.io.IOException;
 import java.net.*;
 import java.nio.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.nio.channels.*;
 
@@ -15,11 +17,12 @@ public class SimpleServer {
     static HashMap<Long, Message> idMessage = new HashMap<>();
     static final String POISON_PILL = "!QUIT";
     static ArrayList<Message> messages = new ArrayList<>();
-    static HashMap<User, List<Long>> userMessages = new HashMap<>();
+    //static HashMap<User, List<Long>> userMessages = new HashMap<>();
     //static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
-    static HashMap<User, List<User>> listOfFollowers = new HashMap<>();
+    //static HashMap<User, List<User>> listOfFollowers = new HashMap<>();
     static long lastId = 0;
+    static final UserDB userDataBase = new UserDB();
 
     static String ERROR = "ERROR : ";
     static String OK = "OK\r\n";
@@ -86,9 +89,7 @@ public class SimpleServer {
                                     System.out.println("Creating entry in userMessage map for user : "+author);
                                     userMessages.put(author, new ArrayList<>());
                                 }*/
-                                if(! isAuthorRegistered(author)) userMessages.put(author, new ArrayList<>());
-                                userMessages.get(author).add(id);
-                                System.out.println(userMessages);
+                                userDataBase.addMessage(author, id);
 
                                 /*** add id for each message ***/
                                 idMessage.put(id, message);
@@ -138,6 +139,18 @@ public class SimpleServer {
                                 */
                                 break;
 
+                            case "REGISTER":
+                                HashMap<String, String> parsedCommand = Parser.parseRegister(result);
+                                if(userDataBase.isUsernameRegistered(parsedCommand.get("username"))){
+                                    buffer = ByteBuffer.wrap((ERROR + "Username already used\r\n").getBytes(StandardCharsets.UTF_8));
+                                }else{
+                                    User user = new User(parsedCommand.get("username"));
+                                    userDataBase.addUser(user);
+                                    buffer = ByteBuffer.wrap((OK).getBytes());
+                                }
+                                client.write(buffer);
+                                break;
+
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);
@@ -176,12 +189,6 @@ public class SimpleServer {
         return userMessages;
     }*/
 
-    public static List<Long> getMsgIds (String author){
-        for(User user : userMessages.keySet()){
-            if (user.getUsername().equals(author)) return userMessages.get(user);
-        }
-        return null;
-    }
 
     public static long generateID() {
         return ++lastId;
@@ -191,7 +198,7 @@ public class SimpleServer {
         StringBuilder response = new StringBuilder("MSG_IDS\r\n");
         List<Long> ids = new ArrayList<>();
         List<Long> selected;
-        if((selected = getMsgIds(author)) != null){
+        if((selected = userDataBase.getMessages(author)).size() > 0){
             for(long selectedId : selected){
                 if(selectedId>=id && idMessage.get(selectedId).hasTag(tag)) ids.add(selectedId);
             }
@@ -225,12 +232,7 @@ public class SimpleServer {
 
         return response.toString();
     }
-    public static boolean isAuthorRegistered(User author){
-        for(User user:userMessages.keySet()){
-            if(user.equals(author)) return true;
-        }
-        return false;
-    }
+
 
 
 }
