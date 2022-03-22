@@ -5,6 +5,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.sql.SQLOutput;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
 
@@ -28,6 +30,7 @@ public class Follower implements ClientAction {
         while (true) {
             boolean hasErrors = false;
             String command = this.getCommand();
+            System.out.println(command);
             for (String request : command.split("\r\n")) {
 
                 buffer.put(request.getBytes());
@@ -83,37 +86,93 @@ public class Follower implements ClientAction {
 
     @Override
     public String getCommand() {
+        System.out.print("Enter username(s)/tag(s) of the user(s)/tag(s) you want to receive separated with comas (Specify user AND tag to combine reception): ");
+        String[] followedKeys = cleanInput();
+        System.out.println(Arrays.deepToString(followedKeys));
+        if(containsOnlyAt(followedKeys)) return requestWithAuthors(followedKeys);
+        else if (containsOnlyTag(followedKeys)) return requestWithTags(followedKeys);
+        else return requestWithAuthorTags(followedKeys);
+
+
+    }
+
+    private String requestWithAuthors(String[] params){
+        StringBuilder command = new StringBuilder();
+        for (String key: params) {
+            command.append("RCV_IDS author:").append(key).append("\r\n");
+
+        }
+
+        return command.toString();
+    }
+
+    private String requestWithTags(String[] params){
+        StringBuilder command = new StringBuilder();
+        for (String key: params) {
+            command.append("RCV_IDS tag:").append(key).append("\r\n");
+
+        }
+
+        return command.toString();
+    }
+
+    private String requestWithAuthorTags(String[] params){
+        ArrayList<String> authors = new ArrayList<>();
+        ArrayList<String> tags = new ArrayList<>();
+        StringBuilder command = new StringBuilder();
+        for (String key: params) {
+           if(key.charAt(0) == '@') authors.add(key);
+           else if(key.charAt(0) == '#') tags.add(key);
+        }
+        for(String tag : tags){
+            for(String author : authors){
+                command.append("RCV_IDS ").append("author:").append(author).append(" ").append("tag:").append(tag).append("\r\n");
+            }
+        }
+        return command.toString();
+    }
+
+    private String[] cleanInput(){
         Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter username of the users you want to subscribe to (separated with comas): ");
-        String message;
-        String[] usernames;
+        String[] followedKeys;
         boolean isInputClean;
         do {
+            String input = scanner.nextLine();
             isInputClean = true;
-            message = scanner.nextLine();
-            if (message.contains(",")) usernames = message.split(",");
-            else usernames = new String[]{message};
-            for (String username : usernames) {
-                if (username.charAt(0) != '@') {
-                    System.out.println("Usernames must begin with a @");
+            if (input.contains(",")){
+                //TODO : Check multiple entries (if no coma, then the input must not contains multiples @ or #
+                followedKeys = input.split(",");
+            }
+            else followedKeys = new String[]{input};
+            System.out.println(Arrays.deepToString(followedKeys));
+            for (String key : followedKeys) {
+                if (key.charAt(0) != '@' && key.charAt(0) != '#') {
+                    System.out.println("Usernames must begin with a @ and Tags with #");
                     isInputClean = false;
                 }
-                if (username.contains(" ")) {
-                    System.out.println("Usernames must not contains spaces");
+                if (key.contains(" ")) {
+                    System.out.println("Usernames and Tags must not contains spaces");
                     isInputClean = false;
                 }
             }
 
 
         } while (!isInputClean);
-
-        StringBuilder command = new StringBuilder();
-        for (String username : usernames) {
-            command.append("RCV_IDS author:").append(username).append("\r\n");
-        }
-
-        return command.toString();
+        return followedKeys;
     }
 
+    private boolean containsOnlyAt(String[] keys){
+        for(String key : keys){
+            if(key.charAt(0) != '@') return false;
+        }
+        return true;
+    }
+
+    private boolean containsOnlyTag(String[] keys){
+        for(String key : keys) {
+            if (key.charAt(0) != '#') return false;
+        }
+        return true;
+    }
 
 }

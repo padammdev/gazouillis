@@ -75,19 +75,11 @@ public class Client {
         System.out.println(
                 "What do you want to do:\n" +
                 "1. Publish a message\n" +
-                "2. Receive 5 last messages of specified user(s)\n" +
-                "3. Subscribe to a user\n" +
-                "4. Unsubscribe to a user\n" +
+                "2. Receive most recent messages of specified user(s) and/or tag(s)\n" +
+                "3. Subscribe to a user or a tag\n" +
+                "4. Unsubscribe to a user or a tag\n" +
                 "5. Quit \n");
-        String input;
-        int choice = 1;
-        do {
-            input = scanner.nextLine();
-            if (!Character.isDigit(input.charAt(0))) {
-                System.out.println("Your answer must be a digit corresponding to the action you wanted to do");
-            } else choice = Integer.parseInt(String.valueOf(input.charAt(0)));
-        } while (!Character.isDigit(input.charAt(0)));
-        return choice;
+        return getResponse(scanner);
     }
 
     public static String getUsername() {
@@ -101,6 +93,18 @@ public class Client {
             username = scanner.nextLine();
         }
         return username;
+    }
+
+    static int getResponse(Scanner scanner) {
+        String input;
+        int choice = 1;
+        do {
+            input = scanner.nextLine();
+            if (!Character.isDigit(input.charAt(0))) {
+                System.out.println("Your answer must be a digit corresponding to the action you wanted to do");
+            } else choice = Integer.parseInt(String.valueOf(input.charAt(0)));
+        } while (!Character.isDigit(input.charAt(0)));
+        return choice;
     }
 
 }

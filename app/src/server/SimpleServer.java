@@ -76,7 +76,7 @@ public class SimpleServer {
                             /*** PUBLISH ***/
 
                             case "PUBLISH":
-
+                                //TODO save tags in Message instance
                                 HashMap<String, String> command = Parser.parsePublish(result);
                                 User author = new User(command.get("author"));
                                 long id = generateID();
@@ -198,7 +198,7 @@ public class SimpleServer {
         StringBuilder response = new StringBuilder("MSG_IDS\r\n");
         List<Long> ids = new ArrayList<>();
         List<Long> selected;
-        if((selected = userDataBase.getMessages(author)).size() > 0){
+        if((selected = userDataBase.getMessages(author))!=null){
             for(long selectedId : selected){
                 if(selectedId>=id && idMessage.get(selectedId).hasTag(tag)) ids.add(selectedId);
             }
