@@ -58,7 +58,7 @@ public class Parser {
         return command.split("\r\n")[0].split(" ")[0];
     }
 
-    public static HashMap<String, String> parseRegister(String command){
+    public static HashMap<String, String> parseConnect(String command){
         HashMap<String, String > parsedCommand = new HashMap<>();
         String[] commandSplit = command.split("\r\n");
         String[] header = commandSplit[0].split(" ");

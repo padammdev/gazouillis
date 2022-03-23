@@ -13,6 +13,7 @@ import java.nio.channels.*;
 
 public class SimpleServer {
 
+    static int usersKey = 0;
     static ArrayList<Long> msgIds = new ArrayList<>();
     static HashMap<Long, Message> idMessage = new HashMap<>();
     static final String POISON_PILL = "!QUIT";
@@ -21,6 +22,7 @@ public class SimpleServer {
     //static HashMap<User, List<Long>> userMessages = new HashMap<>();
     //static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
+    static HashMap<String, SocketChannel> usernamesClient = new HashMap<>();
     //static HashMap<User, List<User>> listOfFollowers = new HashMap<>();
     static long lastId = 0;
     static final UserDB userDataBase = new UserDB();
@@ -45,19 +47,19 @@ public class SimpleServer {
 
             while (iterator.hasNext()) {
                 SelectionKey key = iterator.next();
-
+                System.out.println("Username of connected : " + key.attachment());
                 if (key.isAcceptable()) {
                     SocketChannel client = ssc.accept();
                     client.configureBlocking(false);
                     client.register(selector, SelectionKey.OP_READ);
-                    System.out.println("Client Connected");
-
-                    users.add(key.attachment());
-                    System.out.println("Number of users : " + users.size());
 
                 } else if (key.isReadable()) {
                     SocketChannel client = (SocketChannel) key.channel();
                     ByteBuffer buffer = ByteBuffer.allocate(1024);
+                    /*if(usernamesClient.containsKey("@hello")){
+                        buffer = ByteBuffer.wrap(("You're connected hello").getBytes());
+                        usernamesClient.get("@hello").write(buffer);
+                    }*/
                     if (client.read(buffer) <= 0){
                         key.cancel();
                     }
@@ -133,8 +135,8 @@ public class SimpleServer {
                                 */
                                 break;
 
-                            case "REGISTER":
-                                command = Parser.parseRegister(result);
+                            case "CONNECT":
+                                command = Parser.parseConnect(result);
                                 if(userDataBase.isUsernameRegistered(command.get("username"))){
                                     buffer = ByteBuffer.wrap((ERROR + "Username already used\r\n").getBytes(StandardCharsets.UTF_8));
                                 }else{
@@ -143,11 +145,18 @@ public class SimpleServer {
                                     buffer = ByteBuffer.wrap((OK).getBytes());
                                 }
                                 client.write(buffer);
+
+                                key.attach(command.get("username"));
+                                users.add(key.attachment());
+                                usernamesClient.put(command.get("username"), (SocketChannel) key.channel());
+                                System.out.println("Client Connected");
+                                System.out.println("Number of users : " + users.size());
+
                                 break;
 
                             case "REPUBLISH":
                                 HashMap<String, String> parserRepublish = Parser.parseRepublish(result);
-                                if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(Long.parseLong(parserRepublish.get("id"))){
+                                if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(Long.parseLong(parserRepublish.get("id")))){
                                     buffer = ByteBuffer.wrap(idMessage.get(Long.parseLong(parserRepublish.get("id"))).getCore().getBytes());
                                 }
                                 if(result.contains(OK)){
@@ -159,6 +168,13 @@ public class SimpleServer {
                                 //userDataBase;
                             case "SUBSCRIBE":
                                 command = Parser.parseSubscribe(result);
+                                if(command.containsKey("author")){
+                                    if(!userDataBase.isUsernameRegistered(command.get("author"))) buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
+                                }
+                                if(command.containsKey("tag")){
+                                    if(! tags.contains(command.get("tag"))) tags.add(command.get("tag"));
+                                }
+
                                 break;
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
@@ -167,15 +183,8 @@ public class SimpleServer {
                         }
 
                         buffer.clear();
-
-                        if (key.attachment() == null) {
-                            key.attach(1);
-                        } else {
-                            key.attach(Integer.parseInt(key.attachment().toString()) + 1);
-                        }
                     }
                 }
-
                 iterator.remove();
             }
 
@@ -192,9 +201,10 @@ public class SimpleServer {
         StringBuilder response = new StringBuilder("MSG_IDS\r\n");
         List<Long> ids = new ArrayList<>();
         List<Long> selected;
-        if((selected = userDataBase.getMessages(author))!=null){
-            for(long selectedId : selected){
-                if(selectedId>=id && idMessage.get(selectedId).hasTag(tag) && (tag!=null && tags.contains(tag))) ids.add(selectedId);
+        if(userDataBase.getMessages(author)!=null){
+            for(long selectedId : userDataBase.getMessages(author)){
+                System.out.println(selectedId);
+                if(selectedId>=id && idMessage.get(selectedId).hasTag(tag)) ids.add(selectedId);
             }
         }else{
             List<Long> finalIds = ids;
@@ -203,6 +213,7 @@ public class SimpleServer {
                     finalIds.add(key);
                 }
             });
+            ids.addAll(finalIds);
         }
 
         ids.sort(Collections.reverseOrder());

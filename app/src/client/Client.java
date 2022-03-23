@@ -29,7 +29,7 @@ public class Client {
         boolean isUsernameOK = false;
         do {
             username = getUsername();
-            String register = "REGISTER username:" + username + "\r\n";
+            String register = "CONNECT username:" + username + "\r\n";
             buffer.put(register.getBytes(StandardCharsets.UTF_8));
             buffer.flip();
             client.write(buffer);
