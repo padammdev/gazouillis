@@ -84,23 +84,16 @@ public class SimpleServer {
                                 Message message = new Message(command.get("core"), id, author);
                                 if(message.getTags() != null)tags.addAll(message.getTags());
 
-                                /*** add messages for each user ***/
-                                    //users.add(author);
-                                /*if(userMessages.get(author)==null){
-                                    System.out.println("Creating entry in userMessage map for user : "+author);
-                                    userMessages.put(author, new ArrayList<>());
-                                }*/
                                 userDataBase.addMessage(author, id);
 
-                                /*** add id for each message ***/
                                 idMessage.put(id, message);
-                                //System.out.println(idMessage);
 
-                                //messages.add(message);
                                 System.out.println(message.getCore());
                                 buffer = ByteBuffer.wrap("OK\r\n".getBytes());
                                 client.write(buffer);
                                 System.out.println(new String((buffer.array())).trim());
+
+                                //System.out.println(idMessage);
                                 break;
 
                             /*** RCV_IDS ***/
@@ -152,7 +145,7 @@ public class SimpleServer {
                                 client.write(buffer);
                                 break;
 
-                            case "Republish":
+                            case "REPUBLISH":
                                 HashMap<String, String> parserRepublish = Parser.parserRepublish(result);
                                 if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(parserRepublish.get("id"))){
                                     buffer = ByteBuffer.wrap(idMessage.get(parserRepublish.get("id")).getCore().getBytes());
