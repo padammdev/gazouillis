@@ -98,6 +98,31 @@ public class SimpleServer {
                                 //System.out.println(idMessage);
                                 break;
 
+                            case "REPLY":
+                                HashMap<String, String> command_reply = Parser.parseReply(result);
+
+                                long id_reply = generateID();
+                                User user_reply = userDataBase.getUserByUsername(command_reply.get("author"));
+                                Message message_reply = new Message(command_reply.get("core"), id_reply, user_reply);
+
+                                messages.add(message_reply);
+                                idMessage.put(id_reply,message_reply);
+
+
+
+                                /*** verification of the message being replied to ***/
+                                if(userDataBase.isUsernameRegistered(idMessage.get(command_reply.get("id")).getAuthor().getUsername())){
+                                    userDataBase.addMessage(user_reply, id_reply);
+                                    buffer = ByteBuffer.wrap(command_reply.get("core").getBytes());
+                                    client.write(buffer);
+                                    buffer.clear();
+                                    buffer.flip();
+                                }
+
+                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
+                                client.write(buffer);
+                                break;
+
                             /*** RCV_IDS ***/
 
                             case "RCV_IDS":
@@ -125,6 +150,7 @@ public class SimpleServer {
                                 client.write(buffer);
 
                                 break;
+
                             case "FOLLOW":
                                 /* ex : FOLLOW User1 UserFollowed
                                 command = Parser.parseFollow(result);
@@ -158,14 +184,13 @@ public class SimpleServer {
                                 HashMap<String, String> parserRepublish = Parser.parseRepublish(result);
                                 if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(Long.parseLong(parserRepublish.get("id")))){
                                     buffer = ByteBuffer.wrap(idMessage.get(Long.parseLong(parserRepublish.get("id"))).getCore().getBytes());
+                                    client.write(buffer);
                                 }
-                                if(result.contains(OK)){
-                                    buffer = ByteBuffer.wrap(OK.getBytes());
-                                }
+
+                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
                                 client.write(buffer);
                                 break;
-                                //idMessage;
-                                //userDataBase;
+
                             case "SUBSCRIBE":
                                 command = Parser.parseSubscribe(result);
                                 if(command.containsKey("author")){

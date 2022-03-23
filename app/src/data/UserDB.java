@@ -18,7 +18,7 @@ public class UserDB {
         this.messages = new HashMap<>();
     }
 
-    private User getUserByUsername(String username){
+    public User getUserByUsername(String username){
         return usernames.get(username);
     }
 
