@@ -1,13 +1,10 @@
 package client;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 
-import static client.Client.ERROR;
 import static client.Client.OK;
 
 public class Publisher implements ClientAction {

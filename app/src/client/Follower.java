@@ -1,11 +1,8 @@
 package client;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.sql.SQLOutput;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Scanner;
@@ -86,7 +83,6 @@ public class Follower implements ClientAction {
 
     @Override
     public String getCommand() {
-        System.out.print("Enter username(s)/tag(s) of the user(s)/tag(s) you want to receive separated with comas (Specify user AND tag to combine reception): ");
         String[] followedKeys = cleanInput();
         System.out.println(Arrays.deepToString(followedKeys));
         if(containsOnlyAt(followedKeys)) return requestWithAuthors(followedKeys);
@@ -137,10 +133,10 @@ public class Follower implements ClientAction {
         String[] followedKeys;
         boolean isInputClean;
         do {
+            System.out.print("Enter username(s)/tag(s) of the user(s)/tag(s) you want to receive separated with comas (Specify user AND tag to combine reception): ");
             String input = scanner.nextLine();
             isInputClean = true;
             if (input.contains(",")){
-                //TODO : Check multiple entries (if no coma, then the input must not contains multiples @ or #
                 followedKeys = input.split(",");
             }
             else followedKeys = new String[]{input};

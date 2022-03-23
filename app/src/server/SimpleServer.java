@@ -17,6 +17,7 @@ public class SimpleServer {
     static HashMap<Long, Message> idMessage = new HashMap<>();
     static final String POISON_PILL = "!QUIT";
     static ArrayList<Message> messages = new ArrayList<>();
+    static ArrayList<String> tags = new ArrayList<>();
     //static HashMap<User, List<Long>> userMessages = new HashMap<>();
     //static ArrayList<User> users = new ArrayList<>();
     static ArrayList<Object> users = new ArrayList<>();
@@ -76,12 +77,12 @@ public class SimpleServer {
                             /*** PUBLISH ***/
 
                             case "PUBLISH":
-                                //TODO save tags in Message instance
                                 HashMap<String, String> command = Parser.parsePublish(result);
                                 User author = new User(command.get("author"));
                                 long id = generateID();
                                 System.out.println("Message id: " + id + " from " + command.get("author"));
                                 Message message = new Message(command.get("core"), id, author);
+                                tags.addAll(message.getTags());
 
                                 /*** add messages for each user ***/
                                     //users.add(author);
@@ -200,7 +201,7 @@ public class SimpleServer {
         List<Long> selected;
         if((selected = userDataBase.getMessages(author))!=null){
             for(long selectedId : selected){
-                if(selectedId>=id && idMessage.get(selectedId).hasTag(tag)) ids.add(selectedId);
+                if(selectedId>=id && idMessage.get(selectedId).hasTag(tag) && (tag!=null && tags.contains(tag))) ids.add(selectedId);
             }
         }else{
             List<Long> finalIds = ids;
