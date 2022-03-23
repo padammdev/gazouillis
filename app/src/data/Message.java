@@ -7,6 +7,7 @@ public class Message {
     long id;
     User author;
     ArrayList<String> tags;
+    boolean republished;
 
     public Message(String core, long id,  User author) {
         this.core = core;
@@ -21,6 +22,7 @@ public class Message {
                 }
             }
         }
+        republished = false;
     }
 
     public String getCore() {
@@ -46,6 +48,10 @@ public class Message {
 
     public boolean hasAuthor(String username){
         return username == null || author.getUsername().equals(username);
+    }
+
+    public void republish(){
+        this.republished = true;
     }
 
 }

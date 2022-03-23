@@ -134,11 +134,11 @@ public class SimpleServer {
                                 break;
 
                             case "REGISTER":
-                                HashMap<String, String> parsedCommand = Parser.parseRegister(result);
-                                if(userDataBase.isUsernameRegistered(parsedCommand.get("username"))){
+                                command = Parser.parseRegister(result);
+                                if(userDataBase.isUsernameRegistered(command.get("username"))){
                                     buffer = ByteBuffer.wrap((ERROR + "Username already used\r\n").getBytes(StandardCharsets.UTF_8));
                                 }else{
-                                    User user = new User(parsedCommand.get("username"));
+                                    User user = new User(command.get("username"));
                                     userDataBase.addUser(user);
                                     buffer = ByteBuffer.wrap((OK).getBytes());
                                 }
@@ -146,18 +146,20 @@ public class SimpleServer {
                                 break;
 
                             case "REPUBLISH":
-                                HashMap<String, String> parserRepublish = Parser.parserRepublish(result);
-                                if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(parserRepublish.get("id"))){
-                                    buffer = ByteBuffer.wrap(idMessage.get(parserRepublish.get("id")).getCore().getBytes());
+                                HashMap<String, String> parserRepublish = Parser.parseRepublish(result);
+                                if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(Long.parseLong(parserRepublish.get("id"))){
+                                    buffer = ByteBuffer.wrap(idMessage.get(Long.parseLong(parserRepublish.get("id"))).getCore().getBytes());
                                 }
-                                else if(result.contains(OK)){
+                                if(result.contains(OK)){
                                     buffer = ByteBuffer.wrap(OK.getBytes());
                                 }
                                 client.write(buffer);
                                 break;
                                 //idMessage;
                                 //userDataBase;
-
+                            case "SUBSCRIBE":
+                                command = Parser.parseSubscribe(result);
+                                break;
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);

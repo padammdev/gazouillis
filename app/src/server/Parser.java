@@ -1,6 +1,5 @@
 package server;
 
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class Parser {
@@ -18,7 +17,7 @@ public class Parser {
         return parsedCommand;
     }
 
-    public static HashMap<String, String> parserRepublish(String command){
+    public static HashMap<String, String> parseRepublish(String command){
         HashMap<String, String> parsedCommand = new HashMap<>();
         String [] commandSplit = command.split("\r\n");
         String [] header = commandSplit[0].split(" ");
@@ -65,6 +64,16 @@ public class Parser {
         String[] header = commandSplit[0].split(" ");
         parsedCommand.put("Type", header[0]);
         parsedCommand.put("username", header[1].substring(header[1].indexOf("@")));
+        return parsedCommand;
+    }
+
+    public static HashMap<String, String> parseSubscribe(String command){
+        HashMap<String, String> parsedCommand = new HashMap<>();
+        String[] commandSplit = command.split("\r\n");
+        String[] header = commandSplit[0].split(" ");
+        parsedCommand.put("Type", header[0]);
+        if(header[1].contains("author")) parsedCommand.put("author", header[1].substring(header[1].indexOf("@")));
+        if (header[1].contains("tag")) parsedCommand.put("tag", header[1].substring(header[1].indexOf("#")));
         return parsedCommand;
     }
 }
