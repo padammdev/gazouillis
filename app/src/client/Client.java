@@ -60,6 +60,10 @@ public class Client {
                 case 4:
                     new Reply(username, buffer, client).run();
                     break;
+                case 5:
+                    new Subscriber(username, buffer, client).run();
+                    break;
+
                 case 7:
                     String message = "!QUIT";
                     buffer = ByteBuffer.wrap(message.getBytes());
