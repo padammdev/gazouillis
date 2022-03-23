@@ -82,7 +82,7 @@ public class SimpleServer {
                                 long id = generateID();
                                 System.out.println("Message id: " + id + " from " + command.get("author"));
                                 Message message = new Message(command.get("core"), id, author);
-                                tags.addAll(message.getTags());
+                                if(message.getTags() != null)tags.addAll(message.getTags());
 
                                 /*** add messages for each user ***/
                                     //users.add(author);
@@ -153,8 +153,8 @@ public class SimpleServer {
                                 break;
 
                             case "Republish":
-                                idMessage;
-                                userDataBase;
+                                //idMessage;
+                                //userDataBase;
 
 
 
