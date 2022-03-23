@@ -1,34 +1,24 @@
 package data;
 
-import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class UserDB {
     HashMap<String, User> usernames;
-    HashMap<User, List<User>> following;
-    HashMap<User, List<User>> followed;
     HashMap<User, List<Long>> messages;
+    HashMap<String, List<User>> followedTags;
 
     public UserDB() {
         this.usernames = new HashMap<>();
-        this.following = new HashMap<>();
-        this.followed = new HashMap<>();
         this.messages = new HashMap<>();
+        this.followedTags = new HashMap<>();
     }
 
-    private User getUserByUsername(String username){
+    public User getUserByUsername(String username){
         return usernames.get(username);
     }
 
-    public List<User> getFollowers(User followedUser){
-        return followed.get(getUserByUsername(followedUser.getUsername()));
-    }
-
-    public List<User> getFollowing(User followingUser){
-        return following.get(getUserByUsername(followingUser.getUsername()));
-    }
 
     public List<Long> getMessages(User publisher){
         return messages.get(getUserByUsername(publisher.getUsername()));
@@ -46,8 +36,6 @@ public class UserDB {
         String username = user.getUsername();
         if(usernames.containsKey(username)) return;
         usernames.put(username, user);
-        following.put(user, new ArrayList<>());
-        followed.put(user, new ArrayList<>());
         messages.put(user, new ArrayList<>());
     }
 
@@ -60,11 +48,32 @@ public class UserDB {
         return messages.get(usernames.get(user));
     }
 
-    public void computeFollow(User follower, User followedUser) throws InvalidParameterException {
-        addUser(follower);
-        if(this.getFollowers(followedUser) == null) throw new InvalidParameterException("Unknown User");
-        this.getFollowers(followedUser).add(followedUser);
-        this.getFollowing(follower).add(followedUser);
+    public void computeUserFollow(String followedName, String followerName){
+        User followed = this.getUserByUsername(followedName);
+        User follower = this.getUserByUsername(followerName);
+        followed.addFollower(follower);
+        follower.addFollow(followed);
     }
 
+    public void computeTagFollow(String tag, User user){
+        followedTags.computeIfAbsent(tag, list -> new ArrayList<>());
+        followedTags.get(tag).add(user);
+    }
+
+    public void computeTagUnfollow(String tag, User user){
+        followedTags.get(tag).remove(user);
+    }
+
+    public boolean isTagFollowed(String tag, User user){
+        return followedTags.containsKey(tag) && followedTags.get(tag).contains(user);
+    }
+
+    @Override
+    public String toString() {
+        return "UserDB{" +
+               "usernames=" + usernames +
+               ", messages=" + messages +
+               ", followedTags=" + followedTags +
+               '}';
+    }
 }

@@ -45,6 +45,7 @@ public class SimpleServer {
             Set<SelectionKey> selectionKeySet = selector.selectedKeys();
             Iterator<SelectionKey> iterator = selectionKeySet.iterator();
 
+
             while (iterator.hasNext()) {
                 SelectionKey key = iterator.next();
                 System.out.println("Username of connected : " + key.attachment());
@@ -140,8 +141,8 @@ public class SimpleServer {
                                 if(userDataBase.isUsernameRegistered(command.get("username"))){
                                     buffer = ByteBuffer.wrap((ERROR + "Username already used\r\n").getBytes(StandardCharsets.UTF_8));
                                 }else{
-                                    User user = new User(command.get("username"));
-                                    userDataBase.addUser(user);
+                                    User connectedUser = new User(command.get("username"));
+                                    userDataBase.addUser(connectedUser);
                                     buffer = ByteBuffer.wrap((OK).getBytes());
                                 }
                                 client.write(buffer);
@@ -169,12 +170,19 @@ public class SimpleServer {
                             case "SUBSCRIBE":
                                 command = Parser.parseSubscribe(result);
                                 if(command.containsKey("author")){
-                                    if(!userDataBase.isUsernameRegistered(command.get("author"))) buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
+                                    if(!userDataBase.isUsernameRegistered(command.get("author")))
+                                        buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
+                                    else {
+                                        userDataBase.computeUserFollow(command.get("author"), (String) key.attachment());
+                                        buffer = ByteBuffer.wrap((OK).getBytes());
+                                    }
                                 }
-                                if(command.containsKey("tag")){
+                                else if(command.containsKey("tag")){
                                     if(! tags.contains(command.get("tag"))) tags.add(command.get("tag"));
+                                    userDataBase.computeTagFollow(command.get("tag"), userDataBase.getUserByUsername((String) key.attachment()));
+                                    buffer = ByteBuffer.wrap((OK).getBytes());
                                 }
-
+                                client.write(buffer);
                                 break;
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
@@ -236,6 +244,10 @@ public class SimpleServer {
 
 
         return response.toString();
+    }
+
+    public static void notifyFollowers(User author, Message message){
+
     }
 
 

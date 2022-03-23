@@ -58,8 +58,11 @@ public class Client {
                     new Republish(username,buffer,client).run();
                     break;
                 case 4:
+                    new Subscriber(username, buffer, client).run();
                     break;
                 case 5:
+                    break;
+                case 6:
                     String message = "!QUIT";
                     buffer = ByteBuffer.wrap(message.getBytes());
                     client.write(buffer);
@@ -77,9 +80,9 @@ public class Client {
                 "What do you want to do:\n" +
                 "1. Publish a message\n" +
                 "2. Receive most recent messages of specified user(s) and/or tag(s)\n" +
-                "3. Subscribe to a user or a tag\n" +
-                "4. Unsubscribe to a user or a tag\n" +
-                "5. Quit \n");
+                "4. Subscribe to a user or a tag\n" +
+                "5. Unsubscribe to a user or a tag\n" +
+                "6. Quit \n");
         return getResponse(scanner);
     }
 
