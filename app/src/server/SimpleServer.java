@@ -153,11 +153,17 @@ public class SimpleServer {
                                 break;
 
                             case "Republish":
+                                HashMap<String, String> parserRepublish = Parser.parserRepublish(result);
+                                if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(parserRepublish.get("id"))){
+                                    buffer = ByteBuffer.wrap(idMessage.get(parserRepublish.get("id")).getCore().getBytes());
+                                }
+                                else if(result.contains(OK)){
+                                    buffer = ByteBuffer.wrap(OK.getBytes());
+                                }
+                                client.write(buffer);
+                                break;
                                 //idMessage;
                                 //userDataBase;
-
-
-
 
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
@@ -182,21 +188,6 @@ public class SimpleServer {
 
 
     }
-
-    /*
-    public static String send_message_from_user(User user){
-        String messages;
-        for (int i=0 ; i< )
-    }
-    */
-    /*public static HashMap<User, List<Long>> listOfMessages(Message message) {
-        if (!users.contains(message.getAuthor())) {
-            users.add(message.getAuthor());
-            userMessages.computeIfAbsent(message.getAuthor(), m -> new ArrayList<>()).add(message.getId());
-        }
-        return userMessages;
-    }*/
-
 
     public static long generateID() {
         return ++lastId;
