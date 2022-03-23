@@ -1,9 +1,11 @@
 package data;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class User {
     String username;
+    HashMap<Long ,Message>
 
     public User(String username) {
         this.username = username;
@@ -27,4 +29,6 @@ public class User {
                "username='" + username + '\'' +
                '}';
     }
+
+
 }

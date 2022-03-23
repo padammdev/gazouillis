@@ -56,6 +56,10 @@ public class UserDB {
         this.getMessages(publisher).add(id);
     }
 
+    public List<Long> getMessageById(String user, Long id){
+        return messages.get(usernames.get(user));
+    }
+
     public void computeFollow(User follower, User followedUser) throws InvalidParameterException {
         addUser(follower);
         if(this.getFollowers(followedUser) == null) throw new InvalidParameterException("Unknown User");

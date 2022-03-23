@@ -55,6 +55,7 @@ public class Client {
                     new Follower(username, buffer, client).run();
                     break;
                 case 3:
+                    new Republish(username,buffer,client).run();
                     break;
                 case 4:
                     break;

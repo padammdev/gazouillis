@@ -17,6 +17,19 @@ public class Parser {
 
         return parsedCommand;
     }
+
+    public static HashMap<String, String> parserRepublish(String command){
+        HashMap<String, String> parsedCommand = new HashMap<>();
+        String [] commandSplit = command.split("\r\n");
+        String [] header = commandSplit[0].split(" ");
+        String id = commandSplit[3];
+
+        parsedCommand.put("Type", header[0]);
+        parsedCommand.put("author", header[1].substring(header[1].indexOf("@")));
+        parsedCommand.put("id", id);
+
+        return parsedCommand;
+    }
     public static HashMap<String, String> parseRCVIDS(String command){
         HashMap<String, String> parsedCommand = new HashMap<>();
         String[] commandSplit = command.split("\r\n");

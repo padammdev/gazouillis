@@ -152,6 +152,13 @@ public class SimpleServer {
                                 client.write(buffer);
                                 break;
 
+                            case "Republish":
+                                idMessage;
+                                userDataBase;
+
+
+
+
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);
