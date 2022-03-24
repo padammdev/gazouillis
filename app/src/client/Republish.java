@@ -1,32 +1,18 @@
 package client;
 
-import data.Message;
-import data.User;
-import data.UserDB;
-import server.Parser;
-
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.util.List;
 import java.util.Scanner;
 
 import static client.Client.OK;
 
-public class Republish implements ClientAction{
-
-    String username;
-    ByteBuffer buffer;
-    SocketChannel client;
+public class Republish extends RequestClient {
 
 
-
-    public Republish(String username, ByteBuffer buffer, SocketChannel client) {
-        this.username = username;
-        this.buffer = buffer;
-        this.client= client;
+    public Republish(String username) {
+        super(username);
     }
-
 
     @Override
     public String getCommand() {
@@ -38,6 +24,7 @@ public class Republish implements ClientAction{
 
     @Override
     public void run() throws IOException, InterruptedException {
+        init();
         while(true){
             String message = this.getCommand();
             buffer = ByteBuffer.wrap(message.getBytes());
@@ -54,6 +41,7 @@ public class Republish implements ClientAction{
 
             /*** Close connexion ***/
             if (response.contains(OK)) {
+                closeConnection();
                 break;
             }
         }

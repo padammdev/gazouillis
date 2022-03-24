@@ -3,20 +3,14 @@ package client;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
-import java.sql.SQLOutput;
 import java.util.Scanner;
 
 import static client.Client.OK;
 
-public class Reply implements ClientAction{
-    String username;
-    ByteBuffer buffer;
-    SocketChannel client;
+public class Reply extends RequestClient {
 
-    public Reply(String username, ByteBuffer buffer, SocketChannel client) {
-        this.username = username;
-        this.buffer = buffer;
-        this.client = client;
+    public Reply(String username) {
+        super(username);
     }
 
     @Override
@@ -34,6 +28,7 @@ public class Reply implements ClientAction{
 
     @Override
     public void run() throws IOException, InterruptedException {
+        init();
         while(true){
             String message = this.getCommand();
             buffer = ByteBuffer.wrap(message.getBytes());
@@ -50,6 +45,7 @@ public class Reply implements ClientAction{
 
             /*** Close connexion ***/
             if (response.contains(OK)) {
+                closeConnection();
                 break;
             }
         }

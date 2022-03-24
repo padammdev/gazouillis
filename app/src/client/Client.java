@@ -49,16 +49,16 @@ public class Client {
             choice = getAction();
             switch (choice) {
                 case 1:
-                    new Publisher(username, buffer, client).run();
+                    new Publisher(username).run();
                     break;
                 case 2:
-                    new Follower(username, buffer, client).run();
+                    new Follower(username).run();
                     break;
                 case 3:
-                    new Republish(username,buffer,client).run();
+                    new Republish(username).run();
                     break;
                 case 4:
-                    new Reply(username, buffer, client).run();
+                    new Reply(username).run();
                     break;
                 case 5:
                     new Subscriber(username, buffer, client).run();

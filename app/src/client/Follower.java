@@ -10,20 +10,15 @@ import java.util.Scanner;
 import static client.Client.ERROR;
 import static client.Client.MSG_IDS;
 
-public class Follower implements ClientAction {
+public class Follower extends RequestClient {
 
-    String username;
-    ByteBuffer buffer;
-    SocketChannel client;
 
-    public Follower(String username, ByteBuffer buffer, SocketChannel client) {
-        this.username = username;
-        this.buffer = buffer;
-        this.client = client;
+    public Follower(String username) {
+        super(username);
     }
 
     public void run() throws IOException, InterruptedException {
-
+        init();
         while (true) {
             boolean hasErrors = false;
             String command = this.getCommand();
@@ -75,6 +70,7 @@ public class Follower implements ClientAction {
 
             }
             if (!hasErrors) {
+                closeConnection();
                 break;
             }
         }

@@ -1,20 +1,18 @@
 package client;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 
 import static client.Client.OK;
 
-public class Publisher implements ClientAction {
-    String username;
-    ByteBuffer buffer;
-    SocketChannel client;
-    public Publisher(String username, ByteBuffer buffer, SocketChannel client) {
-        this.username = username;
-        this.buffer = buffer;
-        this.client = client;
+public class Publisher extends RequestClient {
+
+    public Publisher(String username) {
+        super(username);
     }
 
     @Override
@@ -31,6 +29,7 @@ public class Publisher implements ClientAction {
 
     @Override
     public void run() throws IOException {
+        init();
         while(true){
             String message = this.getCommand();
             buffer = ByteBuffer.wrap(message.getBytes());
@@ -47,6 +46,7 @@ public class Publisher implements ClientAction {
 
             /*** Close connexion ***/
             if (response.contains(OK)) {
+                closeConnection();
                 break;
             }
         }

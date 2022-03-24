@@ -7,7 +7,7 @@ import java.util.Scanner;
 
 import static client.Client.OK;
 
-public class Subscriber implements ClientAction{
+public class Subscriber  {
 
     String username;
     ByteBuffer buffer;
@@ -19,7 +19,6 @@ public class Subscriber implements ClientAction{
         this.client = client;
     }
 
-    @Override
     public String getCommand() {
         String subscribingValue = getCleanInput();
         if(subscribingValue.contains("@"))
@@ -29,7 +28,6 @@ public class Subscriber implements ClientAction{
         return null;
     }
 
-    @Override
     public void run() throws IOException, InterruptedException {
         while(true){
             String message = this.getCommand();
