@@ -3,7 +3,7 @@ package client;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
-public class Unsubscriber extends Subscriber{
+public class Unsubscriber extends StreamClient{
 
     public Unsubscriber(String username, ByteBuffer buffer, SocketChannel client) {
         super(username, buffer, client);
