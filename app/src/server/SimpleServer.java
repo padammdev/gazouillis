@@ -96,6 +96,8 @@ public class SimpleServer {
                                 client.write(buffer);
                                 System.out.println(new String((buffer.array())).trim());
 
+                                notifyFollowers(userDataBase.getUserByUsername(command.get("author")), message);
+
                                 //System.out.println(idMessage);
                                 break;
 
@@ -112,7 +114,7 @@ public class SimpleServer {
 
 
                                 /*** verification of the message being replied to ***/
-                                if(userDataBase.isUsernameRegistered(idMessage.get(command_reply.get("id")).getAuthor().getUsername())){
+                                if(idMessage.containsKey(Long.parseLong(command_reply.get("id")))){
                                     userDataBase.addMessage(user_reply, id_reply);
                                     buffer = ByteBuffer.wrap(command_reply.get("core").getBytes());
                                     client.write(buffer);
@@ -194,17 +196,34 @@ public class SimpleServer {
 
                             case "SUBSCRIBE":
                                 command = Parser.parseSubscribe(result);
-                                if(command.containsKey("author")){
-                                    if(!userDataBase.isUsernameRegistered(command.get("author")))
+                                if(command.containsKey("user")){
+                                    if(!userDataBase.isUsernameRegistered(command.get("user")))
                                         buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
                                     else {
-                                        userDataBase.computeUserFollow(command.get("author"), (String) key.attachment());
+                                        userDataBase.computeUserFollow(command.get("user"), (String) key.attachment());
                                         buffer = ByteBuffer.wrap((OK).getBytes());
                                     }
                                 }
                                 else if(command.containsKey("tag")){
                                     if(! tags.contains(command.get("tag"))) tags.add(command.get("tag"));
                                     userDataBase.computeTagFollow(command.get("tag"), userDataBase.getUserByUsername((String) key.attachment()));
+                                    buffer = ByteBuffer.wrap((OK).getBytes());
+                                }
+                                client.write(buffer);
+                                break;
+                            case "UNSUBSCRIBE":
+                                command = Parser.parseSubscribe(result);
+                                if(command.containsKey("user")){
+                                    if(!userDataBase.isUsernameRegistered(command.get("user")))
+                                        buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
+                                    else {
+                                        userDataBase.computeUserUnfollow(command.get("user"), (String) key.attachment());
+                                        buffer = ByteBuffer.wrap((OK).getBytes());
+                                    }
+                                }
+                                else if(command.containsKey("tag")){
+                                    if(! tags.contains(command.get("tag"))) tags.add(command.get("tag"));
+                                    userDataBase.computeTagUnfollow(command.get("tag"), userDataBase.getUserByUsername((String) key.attachment()));
                                     buffer = ByteBuffer.wrap((OK).getBytes());
                                 }
                                 client.write(buffer);
@@ -272,7 +291,32 @@ public class SimpleServer {
     }
 
     public static void notifyFollowers(User author, Message message){
-
+        List<String> followersUsernames = userDataBase.getFollowersUsernames(author);
+        List<String> tagFollowersUsernames = new ArrayList<>();
+        for(String tag : message.getTags()){
+                tagFollowersUsernames.addAll(userDataBase.getTagFollowersUsernames(tag));
+        }
+        for(String username : followersUsernames){
+            SocketChannel client = usernamesClient.get(username);
+            ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
+            try {
+                client.write(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            buffer.clear();
+        }
+        for(String username : tagFollowersUsernames){
+            if(followersUsernames.contains(username)) continue;
+            SocketChannel client = usernamesClient.get(username);
+            ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
+            try {
+                client.write(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            buffer.clear();
+        }
     }
 
 

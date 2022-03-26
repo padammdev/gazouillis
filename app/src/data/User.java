@@ -53,6 +53,20 @@ public class User {
         return followers.contains(user);
     }
 
+    public HashSet<User> getFollows() {
+        return follows;
+    }
 
+    public HashSet<User> getFollowers() {
+        return followers;
+    }
 
+    public void removeFollower(User user){
+        System.out.println(this.followers.remove(user));
+        this.followers.remove(user);
+    }
+
+    public void removeFollow(User user){
+        this.follows.remove(user);
+    }
 }

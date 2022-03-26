@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.sql.SQLOutput;
 import java.util.Arrays;
 import java.util.Scanner;
+import java.util.concurrent.ArrayBlockingQueue;
 
 public class Client {
     static final String ERROR = "ERROR";
@@ -26,6 +27,8 @@ public class Client {
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         client.configureBlocking(true);
 
+        ArrayBlockingQueue<String> stream = new ArrayBlockingQueue<>(5);
+
         boolean isUsernameOK = false;
         do {
             username = getUsername();
@@ -42,7 +45,9 @@ public class Client {
             if (response.contains("OK")) isUsernameOK = true;
         } while (!isUsernameOK);
         System.out.println("Hi " + username + " !");
-
+        Thread worker = new Thread(new StreamHandler(client, stream));
+        worker.start();
+        worker.setPriority(Thread.MIN_PRIORITY);
         int choice;
 
         do {
@@ -63,7 +68,9 @@ public class Client {
                 case 5:
                     new Subscriber(username, buffer, client).run();
                     break;
-
+                case 6:
+                    new Unsubscriber(username, buffer, client).run();
+                    break;
                 case 7:
                     String message = "!QUIT";
                     buffer = ByteBuffer.wrap(message.getBytes());

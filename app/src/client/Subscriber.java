@@ -22,32 +22,18 @@ public class Subscriber  {
     public String getCommand() {
         String subscribingValue = getCleanInput();
         if(subscribingValue.contains("@"))
-            return "SUBSCRIBE author:" + subscribingValue;
+            return "SUBSCRIBE user:" + subscribingValue;
         if(subscribingValue.contains("#"))
             return "SUBSCRIBE tag:" + subscribingValue;
         return null;
     }
 
     public void run() throws IOException, InterruptedException {
-        while(true){
             String message = this.getCommand();
             buffer = ByteBuffer.wrap(message.getBytes());
             client.write(buffer);
             buffer.clear();
 
-            /*** receive message ***/
-            client.read(buffer);
-            String response = new String(buffer.array(), 0, buffer.position());
-            buffer.flip();
-            buffer.clear();
-
-            System.out.println(response);
-
-            /*** Close connexion ***/
-            if (response.contains(OK)) {
-                break;
-            }
-        }
     }
 
     public String getCleanInput(){

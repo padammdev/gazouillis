@@ -88,7 +88,7 @@ public class Parser {
         String[] commandSplit = command.split("\r\n");
         String[] header = commandSplit[0].split(" ");
         parsedCommand.put("Type", header[0]);
-        if(header[1].contains("author")) parsedCommand.put("author", header[1].substring(header[1].indexOf("@")));
+        if(header[1].contains("user")) parsedCommand.put("user", header[1].substring(header[1].indexOf("@")));
         if (header[1].contains("tag")) parsedCommand.put("tag", header[1].substring(header[1].indexOf("#")));
         return parsedCommand;
     }

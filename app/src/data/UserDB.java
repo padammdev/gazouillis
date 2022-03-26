@@ -32,6 +32,14 @@ public class UserDB {
         return usernames.containsKey(username);
     }
 
+    public List<String> getFollowersUsernames(User author){
+        List<String> followersUsernames = new ArrayList<>();
+        for(User follower : author.getFollowers()){
+            followersUsernames.add(follower.getUsername());
+        }
+        return followersUsernames;
+    }
+
     public void addUser(User user){
         String username = user.getUsername();
         if(usernames.containsKey(username)) return;
@@ -64,8 +72,23 @@ public class UserDB {
         followedTags.get(tag).remove(user);
     }
 
+    public void computeUserUnfollow(String followedName, String followerName){
+        User followed = this.getUserByUsername(followedName);
+        User follower = this.getUserByUsername(followerName);
+        followed.removeFollower(follower);
+        follower.removeFollow(followed);
+    }
+
     public boolean isTagFollowed(String tag, User user){
         return followedTags.containsKey(tag) && followedTags.get(tag).contains(user);
+    }
+
+    public List<String> getTagFollowersUsernames(String tag){
+        List<String> usernames = new ArrayList<>();
+        for(User user : followedTags.get(tag)){
+            usernames.add(user.getUsername());
+        }
+        return usernames;
     }
 
     @Override

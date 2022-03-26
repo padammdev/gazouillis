@@ -11,9 +11,9 @@ public class Unsubscriber extends Subscriber{
 
     @Override
     public String getCommand() {
-        String unsubscribingValue = super.getCleanInput();
+        String unsubscribingValue = getCleanInput();
         if(unsubscribingValue.contains("@"))
-            return "UNSUBSCRIBE author:" + unsubscribingValue;
+            return "UNSUBSCRIBE user:" + unsubscribingValue;
         if(unsubscribingValue.contains("#"))
             return "UNSUBSCRIBE tag:" + unsubscribingValue;
         return null;

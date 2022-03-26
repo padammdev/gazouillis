@@ -13,8 +13,8 @@ public class Message {
         this.core = core;
         this.id = id;
         this.author = author;
+        tags = new ArrayList<>();
         if(core.contains("#")){
-            tags = new ArrayList<>();
             String[] split = core.split(" ");
             for(String word : split){
                 if(word.charAt(0) == '#' && !tags.contains(word)){
@@ -52,6 +52,10 @@ public class Message {
 
     public void republish(){
         this.republished = true;
+    }
+
+    public boolean hasTags(){
+        return tags.size()>0;
     }
 
 }
