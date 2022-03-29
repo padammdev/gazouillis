@@ -62,7 +62,6 @@ public class User {
     }
 
     public void removeFollower(User user){
-        System.out.println(this.followers.remove(user));
         this.followers.remove(user);
     }
 

@@ -1,9 +1,8 @@
 package server;
 
+
 import data.Message;
 import data.User;
-import data.UserDB;
-
 import java.io.IOException;
 import java.net.*;
 import java.nio.*;
@@ -11,34 +10,22 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.nio.channels.*;
 
-public class SimpleServer {
+public class SimpleServer extends Server implements RequestHandler {
 
-    static int usersKey = 0;
-    static ArrayList<Long> msgIds = new ArrayList<>();
-    static HashMap<Long, Message> idMessage = new HashMap<>();
-    static final String POISON_PILL = "!QUIT";
-    static ArrayList<Message> messages = new ArrayList<>();
-    static ArrayList<String> tags = new ArrayList<>();
-    //static HashMap<User, List<Long>> userMessages = new HashMap<>();
-    //static ArrayList<User> users = new ArrayList<>();
-    static ArrayList<Object> users = new ArrayList<>();
-    static HashMap<String, SocketChannel> usernamesClient = new HashMap<>();
-    //static HashMap<User, List<User>> listOfFollowers = new HashMap<>();
-    static long lastId = 0;
-    static final UserDB userDataBase = new UserDB();
-
-    static String ERROR = "ERROR : ";
-    static String OK = "OK\r\n";
-
-    public static void main(String[] arg) throws IOException {
-        Selector selector = Selector.open();
-        ServerSocketChannel ssc = ServerSocketChannel.open();
-        InetSocketAddress localhost = new InetSocketAddress("localhost", 12345);
+    @Override
+    public void init() throws IOException {
+        selector = Selector.open();
+        ssc = ServerSocketChannel.open();
+        localhost = new InetSocketAddress("localhost", 12345);
         ssc.bind(localhost);
         ssc.configureBlocking(false);
         ssc.register(selector, SelectionKey.OP_ACCEPT);
         System.out.println("Server ok");
+    }
 
+    @Override
+    public void start() throws IOException {
+        init();
 
         while (true) {
             selector.select();
@@ -48,7 +35,7 @@ public class SimpleServer {
 
             while (iterator.hasNext()) {
                 SelectionKey key = iterator.next();
-                System.out.println("Username of connected : " + key.attachment());
+
                 if (key.isAcceptable()) {
                     SocketChannel client = ssc.accept();
                     client.configureBlocking(false);
@@ -57,183 +44,33 @@ public class SimpleServer {
                 } else if (key.isReadable()) {
                     SocketChannel client = (SocketChannel) key.channel();
                     ByteBuffer buffer = ByteBuffer.allocate(1024);
-                    /*if(usernamesClient.containsKey("@hello")){
-                        buffer = ByteBuffer.wrap(("You're connected hello").getBytes());
-                        usernamesClient.get("@hello").write(buffer);
-                    }*/
-                    if (client.read(buffer) <= 0){
+                    if (client.read(buffer) <= 0) {
                         key.cancel();
-                    }
-                    else {
+                    } else {
                         buffer.flip();
                         String result = new String(buffer.array()).trim();
                         System.out.println("Request :" + result);
+
                         if (result.equals(POISON_PILL)) {
-                            client.close();
-                            System.out.println("Closing connexion");
+                            handlePoisonPill(client);
                             continue;
                         }
                         String type = Parser.getCommandType(result);
 
                         switch (type) {
-
-                            /*** PUBLISH ***/
-
-                            case "PUBLISH":
-                                HashMap<String, String> command = Parser.parsePublish(result);
-                                User author = new User(command.get("author"));
-                                long id = generateID();
-                                System.out.println("Message id: " + id + " from " + command.get("author"));
-                                Message message = new Message(command.get("core"), id, author);
-                                if(message.getTags() != null)tags.addAll(message.getTags());
-
-                                userDataBase.addMessage(author, id);
-
-                                idMessage.put(id, message);
-
-                                System.out.println(message.getCore());
-                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
-                                client.write(buffer);
-                                System.out.println(new String((buffer.array())).trim());
-
-                                notifyFollowers(userDataBase.getUserByUsername(command.get("author")), message);
-
-                                //System.out.println(idMessage);
-                                break;
-
-                            case "REPLY":
-                                HashMap<String, String> command_reply = Parser.parseReply(result);
-
-                                long id_reply = generateID();
-                                User user_reply = userDataBase.getUserByUsername(command_reply.get("author"));
-                                Message message_reply = new Message(command_reply.get("core"), id_reply, user_reply);
-
-                                messages.add(message_reply);
-                                idMessage.put(id_reply,message_reply);
-
-
-
-                                /*** verification of the message being replied to ***/
-                                if(idMessage.containsKey(Long.parseLong(command_reply.get("id")))){
-                                    userDataBase.addMessage(user_reply, id_reply);
-                                    buffer = ByteBuffer.wrap(command_reply.get("core").getBytes());
-                                    client.write(buffer);
-                                    buffer.clear();
-                                    buffer.flip();
-                                }
-
-                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
-                                client.write(buffer);
-                                break;
-
-                            /*** RCV_IDS ***/
-
-                            case "RCV_IDS":
-                                command = Parser.parseRCVIDS(result);
-                                buffer = ByteBuffer.wrap(responseMSGIDS(
-                                                command.get("author"),
-                                                command.get("tag"),
-                                                command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
-                                                command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
-                                        ).getBytes()
-                                );
-                                client.write(buffer);
-                                break;
-
-                            case "RCV_MSG":
-                                command = Parser.parseRCVMSG(result);
-                                long idMsg = Long.parseLong(command.get("Msg_id"));
-                                if (!idMessage.containsKey(idMsg)) {
-                                    buffer = ByteBuffer.wrap((ERROR + "Unknown message id : " +idMsg+ "\r\n").getBytes());
-                                } else {
-                                    //list_id_message.put(id_msg,message.getCore());
-                                    System.out.println(responseMSG(idMsg));
-                                    buffer = ByteBuffer.wrap(responseMSG(idMsg).getBytes());
-                                }
-                                client.write(buffer);
-
-                                break;
-
-                            case "FOLLOW":
-                                /* ex : FOLLOW User1 UserFollowed
-                                command = Parser.parseFollow(result);
-                                User user = Parser.getFirstUser();
-                                User user2 = Parser.getUserfollowed();
-                                list_of_followers.put(user, m -> new ArrayList<>()).add(user2);
-                                System.out.println(user.getUsername() + " follow " + user2.getUsername());
-                                */
-                                break;
-
-                            case "CONNECT":
-                                command = Parser.parseConnect(result);
-                                if(userDataBase.isUsernameRegistered(command.get("username"))){
-                                    buffer = ByteBuffer.wrap((ERROR + "Username already used\r\n").getBytes(StandardCharsets.UTF_8));
-                                }else{
-                                    User connectedUser = new User(command.get("username"));
-                                    userDataBase.addUser(connectedUser);
-                                    buffer = ByteBuffer.wrap((OK).getBytes());
-                                }
-                                client.write(buffer);
-
-                                key.attach(command.get("username"));
-                                users.add(key.attachment());
-                                usernamesClient.put(command.get("username"), (SocketChannel) key.channel());
-                                System.out.println("Client Connected");
-                                System.out.println("Number of users : " + users.size());
-
-                                break;
-
-                            case "REPUBLISH":
-                                HashMap<String, String> parserRepublish = Parser.parseRepublish(result);
-                                if(userDataBase.isUsernameRegistered(parserRepublish.get("author")) && idMessage.containsKey(Long.parseLong(parserRepublish.get("id")))){
-                                    buffer = ByteBuffer.wrap(idMessage.get(Long.parseLong(parserRepublish.get("id"))).getCore().getBytes());
-                                    client.write(buffer);
-                                }
-
-                                buffer = ByteBuffer.wrap("OK\r\n".getBytes());
-                                client.write(buffer);
-                                break;
-
-                            case "SUBSCRIBE":
-                                command = Parser.parseSubscribe(result);
-                                if(command.containsKey("user")){
-                                    if(!userDataBase.isUsernameRegistered(command.get("user")))
-                                        buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
-                                    else {
-                                        userDataBase.computeUserFollow(command.get("user"), (String) key.attachment());
-                                        buffer = ByteBuffer.wrap((OK).getBytes());
-                                    }
-                                }
-                                else if(command.containsKey("tag")){
-                                    if(! tags.contains(command.get("tag"))) tags.add(command.get("tag"));
-                                    userDataBase.computeTagFollow(command.get("tag"), userDataBase.getUserByUsername((String) key.attachment()));
-                                    buffer = ByteBuffer.wrap((OK).getBytes());
-                                }
-                                client.write(buffer);
-                                break;
-                            case "UNSUBSCRIBE":
-                                command = Parser.parseSubscribe(result);
-                                if(command.containsKey("user")){
-                                    if(!userDataBase.isUsernameRegistered(command.get("user")))
-                                        buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
-                                    else {
-                                        userDataBase.computeUserUnfollow(command.get("user"), (String) key.attachment());
-                                        buffer = ByteBuffer.wrap((OK).getBytes());
-                                    }
-                                }
-                                else if(command.containsKey("tag")){
-                                    if(! tags.contains(command.get("tag"))) tags.add(command.get("tag"));
-                                    userDataBase.computeTagUnfollow(command.get("tag"), userDataBase.getUserByUsername((String) key.attachment()));
-                                    buffer = ByteBuffer.wrap((OK).getBytes());
-                                }
-                                client.write(buffer);
-                                break;
-                            default:
+                            case "PUBLISH" -> handlePublish(client, result);
+                            case "REPLY" -> handleReply(client, result);
+                            case "RCV_IDS" -> handleRCVIDS(client, result);
+                            case "RCV_MSG" -> handleRCVMSG(client, result);
+                            case "CONNECT" -> handleConnect(key, client, result);
+                            case "REPUBLISH" -> handleRepublish(client, result);
+                            case "SUBSCRIBE" -> handleSubscribe(key, client, result);
+                            case "UNSUBSCRIBE" -> handleUnsubscribe(key, client, result);
+                            default -> {
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);
-                                break;
+                            }
                         }
-
                         buffer.clear();
                     }
                 }
@@ -245,59 +82,153 @@ public class SimpleServer {
 
     }
 
-    public static long generateID() {
-        return ++lastId;
+    public void handleRepublish(SocketChannel client, String result) throws IOException {
+        ByteBuffer buffer;
+        HashMap<String, String> parserRepublish = Parser.parseRepublish(result);
+        if (db.getUserDB().isUsernameRegistered(parserRepublish.get("author")) && db.getIdMessage().containsKey(Long.parseLong(parserRepublish.get("id")))) {
+            buffer = ByteBuffer.wrap(db.getIdMessage().get(Long.parseLong(parserRepublish.get("id"))).getCore().getBytes());
+            client.write(buffer);
+        }
+
+        buffer = ByteBuffer.wrap("OK\r\n".getBytes());
+        client.write(buffer);
     }
 
-    public static String responseMSGIDS(String author, String tag, long id, int limit) {
-        StringBuilder response = new StringBuilder("MSG_IDS\r\n");
-        List<Long> ids = new ArrayList<>();
-        List<Long> selected;
-        if(userDataBase.getMessages(author)!=null){
-            for(long selectedId : userDataBase.getMessages(author)){
-                System.out.println(selectedId);
-                if(selectedId>=id && idMessage.get(selectedId).hasTag(tag)) ids.add(selectedId);
+    @Override
+    public void handlePoisonPill(SocketChannel client) throws IOException {
+        client.close();
+        System.out.println("Closing connexion");
+    }
+
+    public void handleReply(SocketChannel client, String result) throws IOException {
+        ByteBuffer buffer;
+        HashMap<String, String> command_reply = Parser.parseReply(result);
+
+        long id_reply = generateID();
+        User user_reply = db.getUserDB().getUserByUsername(command_reply.get("author"));
+        Message message_reply = new Message(command_reply.get("core"), id_reply, user_reply);
+
+        db.getMessages().add(message_reply);
+        db.getIdMessage().put(id_reply, message_reply);
+
+
+        /*** verification of the message being replied to ***/
+        if (db.getIdMessage().containsKey(Long.parseLong(command_reply.get("id")))) {
+            db.getUserDB().addMessage(user_reply, id_reply);
+            buffer = ByteBuffer.wrap(command_reply.get("core").getBytes());
+            client.write(buffer);
+            buffer.clear();
+            buffer.flip();
+        }
+
+        buffer = ByteBuffer.wrap("OK\r\n".getBytes());
+        client.write(buffer);
+    }
+
+    public void handleUnsubscribe(SelectionKey key, SocketChannel client, String result) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        HashMap<String, String> command = Parser.parseSubscribe(result);
+        if (command.containsKey("user")) {
+            if (!db.getUserDB().isUsernameRegistered(command.get("user")))
+                buffer = ByteBuffer.wrap((ERROR + "User does not exist").getBytes(StandardCharsets.UTF_8));
+            else {
+                db.getUserDB().computeUserUnfollow(command.get("user"), (String) key.attachment());
+                buffer = ByteBuffer.wrap((OK).getBytes());
             }
-        }else{
-            List<Long> finalIds = ids;
-            idMessage.forEach((key, value)->{
-                if (value.hasTag(tag) && key >= id) {
-                    finalIds.add(key);
-                }
-            });
-            ids.addAll(finalIds);
+        } else if (command.containsKey("tag")) {
+            if (!db.getTags().contains(command.get("tag"))) db.getTags().add(command.get("tag"));
+            db.getUserDB().computeTagUnfollow(command.get("tag"), db.getUserDB().getUserByUsername((String) key.attachment()));
+            buffer = ByteBuffer.wrap((OK).getBytes());
         }
-
-        ids.sort(Collections.reverseOrder());
-        ids = ids.size()>=limit? ids.subList(0, limit) : ids;
-        for (long ID : ids) {
-            response.append(ID).append("\r\n");
-        }
-        return response.toString();
+        client.write(buffer);
     }
 
-    public static String responseMSG(long id) {
-        StringBuilder response = new StringBuilder(("MSG\r\n"));
-        Message message = idMessage.get(id);
-        response.append("author:")
-                .append(message.getAuthor().getUsername())
-                .append(" msg_id:")
-                .append(id)
-                .append("\r\n");
-        response.append(message.getCore());
-
-
-        return response.toString();
+    public void handleSubscribe(SelectionKey key, SocketChannel client, String result) throws IOException {
+        ByteBuffer buffer = ByteBuffer.allocate(1024);
+        HashMap<String, String> command = Parser.parseSubscribe(result);
+        if (command.containsKey("user")) {
+            if (!db.getUserDB().isUsernameRegistered(command.get("user")))
+                sendERROR(client, "Username does not exist\r\n");
+            else {
+                db.getUserDB().computeUserFollow(command.get("user"), (String) key.attachment());
+                sendOK(client);
+            }
+        } else if (command.containsKey("tag")) {
+            if (!db.getTags().contains(command.get("tag"))) db.getTags().add(command.get("tag"));
+            db.getUserDB().computeTagFollow(command.get("tag"), db.getUserDB().getUserByUsername((String) key.attachment()));
+            sendOK(client);
+        }
     }
 
-    public static void notifyFollowers(User author, Message message){
-        List<String> followersUsernames = userDataBase.getFollowersUsernames(author);
+    public void handleConnect(SelectionKey key, SocketChannel client, String result) throws IOException {
+        HashMap<String, String> command = Parser.parseConnect(result);
+        if (db.getUserDB().isUsernameRegistered(command.get("username"))) {
+            sendERROR(client, "Username already used\r\n");
+        } else {
+            User connectedUser = new User(command.get("username"));
+            db.getUserDB().addUser(connectedUser);
+            sendOK(client);
+        }
+
+        key.attach(command.get("username"));
+        db.getUsernamesClient().put(command.get("username"), (SocketChannel) key.channel());
+        System.out.println("Client Connected");
+    }
+
+    public void handleRCVMSG(SocketChannel client, String result) throws IOException {
+        ByteBuffer buffer;
+        HashMap<String, String> command = Parser.parseRCVMSG(result);
+        long idMsg = Long.parseLong(command.get("Msg_id"));
+        if (!db.getIdMessage().containsKey(idMsg)) {
+            sendERROR(client, "Unknown message id : " + idMsg + "\r\n");
+        } else {
+            //list_id_message.put(id_msg,message.getCore());
+            System.out.println(responseMSG(idMsg));
+            buffer = ByteBuffer.wrap(responseMSG(idMsg).getBytes());
+            client.write(buffer);
+        }
+    }
+
+    public void handleRCVIDS(SocketChannel client, String result) throws IOException {
+        ByteBuffer buffer;
+        HashMap<String, String> command = Parser.parseRCVIDS(result);
+        buffer = ByteBuffer.wrap(responseMSGIDS(
+                        command.get("author"),
+                        command.get("tag"),
+                        command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
+                        command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
+                ).getBytes()
+        );
+        client.write(buffer);
+    }
+
+    public void handlePublish(SocketChannel client, String result) throws IOException {
+        HashMap<String, String> command = Parser.parsePublish(result);
+        User author = new User(command.get("author"));
+        long id = generateID();
+        System.out.println("Message id: " + id + " from " + command.get("author"));
+        Message message = new Message(command.get("core"), id, author);
+        if (message.getTags() != null) db.getTags().addAll(message.getTags());
+
+        db.getUserDB().addMessage(author, id);
+
+        db.getIdMessage().put(id, message);
+
+        System.out.println(message.getCore());
+        sendOK(client);
+
+        notifyFollowers(db.getUserDB().getUserByUsername(command.get("author")), message);
+    }
+
+    @Override
+    public void notifyFollowers(User author, Message message) {
+        List<String> followersUsernames = db.getUserDB().getFollowersUsernames(author);
         List<String> tagFollowersUsernames = new ArrayList<>();
-        for(String tag : message.getTags()){
-                tagFollowersUsernames.addAll(userDataBase.getTagFollowersUsernames(tag));
+        for (String tag : message.getTags()) {
+            tagFollowersUsernames.addAll(db.getUserDB().getTagFollowersUsernames(tag));
         }
-        for(String username : followersUsernames){
-            SocketChannel client = usernamesClient.get(username);
+        for (String username : followersUsernames) {
+            SocketChannel client = db.getUsernamesClient().get(username);
             ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
             try {
                 client.write(buffer);
@@ -306,9 +237,9 @@ public class SimpleServer {
             }
             buffer.clear();
         }
-        for(String username : tagFollowersUsernames){
-            if(followersUsernames.contains(username)) continue;
-            SocketChannel client = usernamesClient.get(username);
+        for (String username : tagFollowersUsernames) {
+            if (followersUsernames.contains(username)) continue;
+            SocketChannel client = db.getUsernamesClient().get(username);
             ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
             try {
                 client.write(buffer);
@@ -318,7 +249,6 @@ public class SimpleServer {
             buffer.clear();
         }
     }
-
 
 
 }

@@ -18,6 +18,7 @@ public abstract class StreamClient {
     }
 
     abstract String getCommand();
+
     void run() throws IOException, InterruptedException {
         String message = this.getCommand();
         buffer = ByteBuffer.wrap(message.getBytes());
