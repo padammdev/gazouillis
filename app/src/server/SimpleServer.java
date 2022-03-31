@@ -16,7 +16,8 @@ public class SimpleServer extends Server implements RequestHandler {
     public void init() throws IOException {
         selector = Selector.open();
         ssc = ServerSocketChannel.open();
-        localhost = new InetSocketAddress("localhost", 12345);
+        port = 12345;
+        localhost = new InetSocketAddress("localhost", port );
         ssc.bind(localhost);
         ssc.configureBlocking(false);
         ssc.register(selector, SelectionKey.OP_ACCEPT);
@@ -58,18 +59,34 @@ public class SimpleServer extends Server implements RequestHandler {
                         String type = Parser.getCommandType(result);
 
                         switch (type) {
-                            case "PUBLISH" -> handlePublish(client, result);
-                            case "REPLY" -> handleReply(client, result);
-                            case "RCV_IDS" -> handleRCVIDS(client, result);
-                            case "RCV_MSG" -> handleRCVMSG(client, result);
-                            case "CONNECT" -> handleConnect(key, client, result);
-                            case "REPUBLISH" -> handleRepublish(client, result);
-                            case "SUBSCRIBE" -> handleSubscribe(key, client, result);
-                            case "UNSUBSCRIBE" -> handleUnsubscribe(key, client, result);
-                            default -> {
+                            case "PUBLISH":
+                                handlePublish(client, result);
+                                break;
+                            case "REPLY":
+                                handleReply(client, result);
+                                break;
+                            case "RCV_IDS":
+                                handleRCVIDS(client, result);
+                                break;
+                            case "RCV_MSG":
+                                handleRCVMSG(client, result);
+                                break;
+                            case "CONNECT":
+                                handleConnect(key, client, result);
+                                break;
+                            case "REPUBLISH":
+                                handleRepublish(client, result);
+                                break;
+                            case "SUBSCRIBE":
+                                handleSubscribe(key, client, result);
+                                break;
+                            case "UNSUBSCRIBE":
+                                handleUnsubscribe(key, client, result);
+                                break;
+                            default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);
-                            }
+                                break;
                         }
                         buffer.clear();
                     }

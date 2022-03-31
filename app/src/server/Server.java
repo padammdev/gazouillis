@@ -23,6 +23,7 @@ public abstract class Server {
     Selector selector;
     ServerSocketChannel ssc;
     InetSocketAddress localhost;
+    int port;
 
     public Server() {
         this.db = new Database();
@@ -92,5 +93,9 @@ public abstract class Server {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 }
