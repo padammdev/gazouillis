@@ -14,16 +14,22 @@ public class ConfigurationHandler {
 
     File cfg;
     ArrayList<String> configs;
-    int nextPort = 12345;
+    int nextPort;
 
     static ConfigurationHandler newConfiguration(String filename) throws IOException {
         ConfigurationHandler configurationHandler = new ConfigurationHandler();
         configurationHandler.cfg = new File(filename);
         configurationHandler.configs = new ArrayList<>();
         Scanner scanner = new Scanner(new File(filename));
+        int port = 12345;
         while(scanner.hasNextLine()){
-            configurationHandler.configs.add(scanner.nextLine());
+            String line = scanner.nextLine();
+            if( ! line.equals("")) {
+                configurationHandler.configs.add(line);
+                port = Integer.parseInt(line.split(" ")[3]) + 1;
+            }
         }
+        configurationHandler.setNextPort(port);
         return configurationHandler;
     }
 
@@ -66,7 +72,15 @@ public class ConfigurationHandler {
         }
     }
 
+    int getMasterPort(){
+        return 12345;
+    }
+
     int getNextPort(){
-        return nextPort++;
+        return nextPort;
+    }
+
+    public void setNextPort(int nextPort) {
+        this.nextPort = nextPort;
     }
 }

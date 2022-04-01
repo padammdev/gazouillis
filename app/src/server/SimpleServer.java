@@ -24,80 +24,6 @@ public class SimpleServer extends Server implements RequestHandler {
         System.out.println("Server ok");
     }
 
-    @Override
-    public void start() throws IOException {
-        init();
-
-        while (true) {
-            selector.select();
-            Set<SelectionKey> selectionKeySet = selector.selectedKeys();
-            Iterator<SelectionKey> iterator = selectionKeySet.iterator();
-
-
-            while (iterator.hasNext()) {
-                SelectionKey key = iterator.next();
-
-                if (key.isAcceptable()) {
-                    SocketChannel client = ssc.accept();
-                    client.configureBlocking(false);
-                    client.register(selector, SelectionKey.OP_READ);
-
-                } else if (key.isReadable()) {
-                    SocketChannel client = (SocketChannel) key.channel();
-                    ByteBuffer buffer = ByteBuffer.allocate(1024);
-                    if (client.read(buffer) <= 0) {
-                        key.cancel();
-                    } else {
-                        buffer.flip();
-                        String result = new String(buffer.array()).trim();
-                        System.out.println("Request :" + result);
-
-                        if (result.equals(POISON_PILL)) {
-                            handlePoisonPill(client);
-                            continue;
-                        }
-                        String type = Parser.getCommandType(result);
-
-                        switch (type) {
-                            case "PUBLISH":
-                                handlePublish(client, result);
-                                break;
-                            case "REPLY":
-                                handleReply(client, result);
-                                break;
-                            case "RCV_IDS":
-                                handleRCVIDS(client, result);
-                                break;
-                            case "RCV_MSG":
-                                handleRCVMSG(client, result);
-                                break;
-                            case "CONNECT":
-                                handleConnect(key, client, result);
-                                break;
-                            case "REPUBLISH":
-                                handleRepublish(client, result);
-                                break;
-                            case "SUBSCRIBE":
-                                handleSubscribe(key, client, result);
-                                break;
-                            case "UNSUBSCRIBE":
-                                handleUnsubscribe(key, client, result);
-                                break;
-                            default:
-                                buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
-                                client.write(buffer);
-                                break;
-                        }
-                        buffer.clear();
-                    }
-                }
-                iterator.remove();
-            }
-
-        }
-
-
-    }
 
     public void handleRepublish(SocketChannel client, String result) throws IOException {
         ByteBuffer buffer;
@@ -113,11 +39,6 @@ public class SimpleServer extends Server implements RequestHandler {
 
     }
 
-    @Override
-    public void handlePoisonPill(SocketChannel client) throws IOException {
-        client.close();
-        System.out.println("Closing connexion");
-    }
 
     public void handleReply(SocketChannel client, String result) throws IOException {
         ByteBuffer buffer;
@@ -179,20 +100,6 @@ public class SimpleServer extends Server implements RequestHandler {
         }
     }
 
-    public void handleConnect(SelectionKey key, SocketChannel client, String result) throws IOException {
-        HashMap<String, String> command = Parser.parseConnect(result);
-        if (db.getUserDB().isUsernameRegistered(command.get("username"))) {
-            sendERROR(client, "Username already used\r\n");
-        } else {
-            User connectedUser = new User(command.get("username"));
-            db.getUserDB().addUser(connectedUser);
-            sendOK(client);
-        }
-
-        key.attach(command.get("username"));
-        db.getUsernamesClient().put(command.get("username"), (SocketChannel) key.channel());
-        System.out.println("Client Connected");
-    }
 
     public void handleRCVMSG(SocketChannel client, String result) throws IOException {
         ByteBuffer buffer;
@@ -267,6 +174,21 @@ public class SimpleServer extends Server implements RequestHandler {
             }
             buffer.clear();
         }
+    }
+
+    public void handleConnect(SelectionKey key, SocketChannel client, String result) throws IOException {
+        HashMap<String, String> command = Parser.parseConnect(result);
+        if (db.getUserDB().isUsernameRegistered(command.get("username"))) {
+            sendERROR(client, "Username already used\r\n");
+        } else {
+            User connectedUser = new User(command.get("username"));
+            db.getUserDB().addUser(connectedUser);
+            sendOK(client);
+        }
+
+        key.attach(command.get("username"));
+        db.getUsernamesClient().put(command.get("username"), (SocketChannel) key.channel());
+        System.out.println("Client Connected");
     }
 
 
