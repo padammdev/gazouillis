@@ -7,15 +7,14 @@ import data.User;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-public abstract class Server {
+public abstract class Server implements RequestHandler{
     final Database db;
     final String POISON_PILL = "!QUIT";
     String ERROR = "ERROR : ";
@@ -31,7 +30,77 @@ public abstract class Server {
 
     public abstract void init() throws IOException;
 
-    public abstract void start() throws IOException;
+    public void start() throws IOException{
+        init();
+
+        while (true) {
+            selector.select();
+            Set<SelectionKey> selectionKeySet = selector.selectedKeys();
+            Iterator<SelectionKey> iterator = selectionKeySet.iterator();
+
+
+            while (iterator.hasNext()) {
+                SelectionKey key = iterator.next();
+
+                if (key.isAcceptable()) {
+                    SocketChannel client = ssc.accept();
+                    client.configureBlocking(false);
+                    client.register(selector, SelectionKey.OP_READ);
+
+                } else if (key.isReadable()) {
+                    SocketChannel client = (SocketChannel) key.channel();
+                    ByteBuffer buffer = ByteBuffer.allocate(1024);
+                    if (client.read(buffer) <= 0) {
+                        key.cancel();
+                    } else {
+                        buffer.flip();
+                        String result = new String(buffer.array()).trim();
+                        System.out.println("Request :" + result);
+
+                        if (result.equals(POISON_PILL)) {
+                            handlePoisonPill(client);
+                            continue;
+                        }
+                        String type = Parser.getCommandType(result);
+
+                        switch (type) {
+                            case "PUBLISH":
+                                this.handlePublish(client, result);
+                                break;
+                            case "REPLY":
+                                this.handleReply(client, result);
+                                break;
+                            case "RCV_IDS":
+                                this.handleRCVIDS(client, result);
+                                break;
+                            case "RCV_MSG":
+                                this.handleRCVMSG(client, result);
+                                break;
+                            case "CONNECT":
+                                this.handleConnect(key, client, result);
+                                break;
+                            case "REPUBLISH":
+                                this.handleRepublish(client, result);
+                                break;
+                            case "SUBSCRIBE":
+                                this.handleSubscribe(key, client, result);
+                                break;
+                            case "UNSUBSCRIBE":
+                                this.handleUnsubscribe(key, client, result);
+                                break;
+                            default:
+                                buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
+                                client.write(buffer);
+                                break;
+                        }
+                        buffer.clear();
+                    }
+                }
+                iterator.remove();
+            }
+
+        }
+    }
 
     public long generateID() {
         return db.generateID();
@@ -98,4 +167,11 @@ public abstract class Server {
     public void setPort(int port) {
         this.port = port;
     }
+
+    @Override
+    public void handlePoisonPill(SocketChannel client) throws IOException {
+        client.close();
+        System.out.println("Closing connexion");
+    }
+
 }
