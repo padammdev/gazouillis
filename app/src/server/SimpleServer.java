@@ -29,11 +29,9 @@ public class SimpleServer extends Server implements RequestHandler {
         ByteBuffer buffer;
         HashMap<String, String> parserRepublish = Parser.parseRepublish(result);
         if (db.getUserDB().isUsernameRegistered(parserRepublish.get("author")) && db.getIdMessage().containsKey(Long.parseLong(parserRepublish.get("id")))) {
-            buffer = ByteBuffer.wrap("OK\r\n".getBytes());
-            client.write(buffer);
+            sendOK(client);
         }else{
-            buffer = ByteBuffer.wrap("ERROR\r\n".getBytes());
-            client.write(buffer);
+            sendERROR(client,"Invalid ID or unknwon ID");
         }
 
 

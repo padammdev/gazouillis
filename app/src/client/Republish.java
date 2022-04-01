@@ -57,7 +57,7 @@ public class Republish extends RequestClient {
             System.out.println(response);
 
             /*** Close connexion ***/
-            if (response.contains(OK) || response.contains(ERROR)) {
+            if (response.contains(OK)) {
                 closeConnection();
                 break;
             }
