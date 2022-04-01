@@ -13,11 +13,24 @@ public class Reply extends RequestClient {
         super(username);
     }
 
+    boolean isOk = false;
+    long id;
     @Override
     public String getCommand() {
-        System.out.println("You want to reply to which message ? (we need the id)");
-        Scanner scanner = new Scanner(System.in);
-        long id = scanner.nextLong();
+
+        try {
+            do {
+                System.out.println("You want to reply to which message ? (we need the id)");
+                Scanner scanner = new Scanner(System.in);
+                if (scanner.hasNextLong()){
+                    this.id = scanner.nextLong();
+                    isOk = true;
+                }
+            } while (!isOk);
+        }
+        catch(NumberFormatException e){
+            System.out.println("Error in reply");
+        }
 
         System.out.println("Enter the reply: ");
         Scanner scanner1 = new Scanner(System.in);
