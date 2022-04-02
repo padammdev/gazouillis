@@ -22,7 +22,7 @@ public class Client {
     public static void main(String[] args) throws IOException, InterruptedException {
 
         InetAddress address = InetAddress.getByName("localhost");
-        int port = 12346;
+        int port = 12345;
         SocketChannel client = SocketChannel.open(new InetSocketAddress(address, port));
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         client.configureBlocking(true);
