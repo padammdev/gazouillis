@@ -28,6 +28,10 @@ public abstract class Server implements RequestHandler{
         this.db = new Database();
     }
 
+    public Server(Database db){
+        this.db = db;
+    }
+
     public abstract void init() throws IOException;
 
     public void start() throws IOException{
@@ -174,4 +178,29 @@ public abstract class Server implements RequestHandler{
         System.out.println("Closing connexion");
     }
 
+    @Override
+    public void handleConnect(SelectionKey key, SocketChannel client, String result) throws IOException {
+
+        HashMap<String, String> command = Parser.parseConnect(result);
+        if (db.getUserDB().isUsernameRegistered(command.get("username"))) {
+            sendERROR(client, "Username already used\r\n");
+        } else {
+            User connectedUser = new User(command.get("username"));
+            db.getUserDB().addUser(connectedUser);
+            sendOK(client);
+        }
+
+        key.attach(command.get("username"));
+        db.getUsernamesClient().put(command.get("username"), (SocketChannel) key.channel());
+        System.out.println("Client Connected");
+
+    }
+
+    public InetSocketAddress getLocalhost() {
+        return localhost;
+    }
+
+    public int getPort() {
+        return port;
+    }
 }

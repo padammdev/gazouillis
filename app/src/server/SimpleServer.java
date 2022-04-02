@@ -174,21 +174,6 @@ public class SimpleServer extends Server implements RequestHandler {
         }
     }
 
-    public void handleConnect(SelectionKey key, SocketChannel client, String result) throws IOException {
-        HashMap<String, String> command = Parser.parseConnect(result);
-        if (db.getUserDB().isUsernameRegistered(command.get("username"))) {
-            sendERROR(client, "Username already used\r\n");
-        } else {
-            User connectedUser = new User(command.get("username"));
-            db.getUserDB().addUser(connectedUser);
-            sendOK(client);
-        }
-
-        key.attach(command.get("username"));
-        db.getUsernamesClient().put(command.get("username"), (SocketChannel) key.channel());
-        System.out.println("Client Connected");
-    }
-
 
 }
 
