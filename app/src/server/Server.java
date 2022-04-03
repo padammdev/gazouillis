@@ -92,6 +92,15 @@ public abstract class Server implements RequestHandler{
                             case "UNSUBSCRIBE":
                                 this.handleUnsubscribe(key, client, result);
                                 break;
+                            case "SERVERCONNECT":
+                                this.handleServerConnect(client);
+                                break;
+                            case "PEER_REQUESTID":
+                                this.handlePeerRequestID(client);
+                                break;
+                            case "PEER_USERCONNECT":
+                                this.handlePeerRequestUserConnect(client, result, key);
+                                break;
                             default:
                                 buffer = ByteBuffer.wrap((ERROR + "Unknown command\r\n").getBytes());
                                 client.write(buffer);

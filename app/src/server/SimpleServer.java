@@ -37,6 +37,21 @@ public class SimpleServer extends Server implements RequestHandler {
 
     }
 
+    @Override
+    public void handlePeerRequestID(SocketChannel peer) throws IOException {
+
+    }
+
+    @Override
+    public void handleServerConnect(SocketChannel peer) throws IOException {
+
+    }
+
+    @Override
+    public void handlePeerRequestUserConnect(SocketChannel peer, String result, SelectionKey key) throws IOException {
+
+    }
+
 
     public void handleReply(SocketChannel client, String result) throws IOException {
         ByteBuffer buffer;

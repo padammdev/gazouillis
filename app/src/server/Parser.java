@@ -92,4 +92,20 @@ public class Parser {
         if (header[1].contains("tag")) parsedCommand.put("tag", header[1].substring(header[1].indexOf("#")));
         return parsedCommand;
     }
+
+    public static HashMap<String, String> parseServerConnect(String command){
+        HashMap<String,String> parsedCommand = new HashMap<>();
+        String[] commandSplit = command.split("\r\n");
+        String[] header = commandSplit[0].split(" ");
+        parsedCommand.put("Type", header[0]);
+        return parsedCommand;
+    }
+
+    public static HashMap<String, String> parsePeerRequestID(String command){
+        HashMap<String,String> parsedCommand = new HashMap<>();
+        String[] commandSplit = command.split("\r\n");
+        String[] header = commandSplit[0].split(" ");
+        parsedCommand.put("Type", header[0]);
+        return parsedCommand;
+    }
 }

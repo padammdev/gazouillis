@@ -79,7 +79,7 @@ public class Client {
                     break;
             }
         } while (choice != 7);
-
+        worker.interrupt();
 
     }
 

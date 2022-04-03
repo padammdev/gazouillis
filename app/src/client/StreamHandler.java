@@ -27,7 +27,8 @@ public class StreamHandler implements Runnable{
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Closing Stream");
+                break;
             }
         }
 

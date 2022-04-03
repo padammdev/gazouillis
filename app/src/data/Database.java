@@ -11,6 +11,7 @@ public class Database {
     HashMap<String, SocketChannel> usernamesClient;
     ArrayList<Message> messages;
     ArrayList<String> tags;
+    HashMap<User, Integer> connectedUsers;
 
     public Database() {
         this.idMessage = new HashMap<>();
@@ -19,6 +20,7 @@ public class Database {
         this.usernamesClient = new HashMap<>();
         this.messages = new ArrayList<>();
         this.tags = new ArrayList<>();
+        connectedUsers = new HashMap<>();
     }
 
     public HashMap<Long, Message> getIdMessage() {
@@ -49,6 +51,11 @@ public class Database {
         return ++lastId;
     }
 
+    public HashMap<User, Integer> getConnectedUsers() {
+        return connectedUsers;
+    }
 
-
+    public void addConnection(User user, int port){
+        connectedUsers.put(user, port);
+    }
 }
