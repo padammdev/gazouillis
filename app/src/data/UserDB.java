@@ -8,6 +8,7 @@ public class UserDB {
     HashMap<String, User> usernames;
     HashMap<User, List<Long>> messages;
     HashMap<String, List<User>> followedTags;
+    
 
     public UserDB() {
         this.usernames = new HashMap<>();

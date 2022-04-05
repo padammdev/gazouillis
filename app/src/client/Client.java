@@ -20,9 +20,11 @@ public class Client {
     static String message;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-
+        System.out.println("Which port you want to connect ?");
+        Scanner scannerPort = new Scanner(System.in);
+        int port = scannerPort.nextInt();
         InetAddress address = InetAddress.getByName("localhost");
-        int port = 12345;
+        //int port = 12345;
         SocketChannel client = SocketChannel.open(new InetSocketAddress(address, port));
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         client.configureBlocking(true);

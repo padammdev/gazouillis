@@ -1,9 +1,13 @@
 package client;
 
+import netscape.javascript.JSObject;
+
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 public class Unsubscriber extends StreamClient{
+
+
 
     public Unsubscriber(String username, ByteBuffer buffer, SocketChannel client) {
         super(username, buffer, client);
@@ -11,6 +15,7 @@ public class Unsubscriber extends StreamClient{
 
     @Override
     public String getCommand() {
+
         String unsubscribingValue = getCleanInput();
         if(unsubscribingValue.contains("@"))
             return "UNSUBSCRIBE user:" + unsubscribingValue;
