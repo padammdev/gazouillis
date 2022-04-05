@@ -58,4 +58,8 @@ public class Database {
     public void addConnection(User user, int port){
         connectedUsers.put(user, port);
     }
+
+    public boolean isUserConnectedToSlave(User user){
+        return connectedUsers.containsKey(user);
+    }
 }

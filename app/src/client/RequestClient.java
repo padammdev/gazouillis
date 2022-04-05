@@ -11,9 +11,11 @@ public abstract class RequestClient {
    String username;
    ByteBuffer buffer;
    SocketChannel client;
+   int port;
 
-   public RequestClient(String username) {
+   public RequestClient(String username, int port) {
       this.username = username;
+      this.port = port;
    }
 
    abstract String getCommand();
@@ -21,7 +23,6 @@ public abstract class RequestClient {
 
    void init() throws IOException {
       InetAddress address = InetAddress.getByName("localhost");
-      int port = 12345;
       this.client = SocketChannel.open(new InetSocketAddress(address, port));
       this.buffer = ByteBuffer.allocate(1024);
       client.configureBlocking(true);

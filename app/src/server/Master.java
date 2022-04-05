@@ -11,8 +11,9 @@ import java.nio.channels.SelectionKey;
 import java.nio.channels.Selector;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class Master extends Server {
 
@@ -25,20 +26,6 @@ public class Master extends Server {
         this.slaves = new HashMap<>();
     }
 
-    @Override
-    public void handlePublish(SocketChannel client, String result) throws IOException {
-
-    }
-
-    @Override
-    public void handleRCVIDS(SocketChannel client, String result) throws IOException {
-
-    }
-
-    @Override
-    public void handleRCVMSG(SocketChannel client, String result) throws IOException {
-
-    }
 
 
     @Override
@@ -52,22 +39,6 @@ public class Master extends Server {
     }
 
     @Override
-    public void handleReply(SocketChannel client, String result) throws IOException {
-
-    }
-
-    @Override
-    public void handleRepublish(SocketChannel client, String result) throws IOException {
-
-    }
-
-    @Override
-    public void handlePeerRequestID(SocketChannel peer) throws IOException {
-        long id = db.generateID();
-        peer.write(ByteBuffer.wrap(("ID\r\n" + id + "\r\n").getBytes(StandardCharsets.UTF_8)));
-    }
-
-    @Override
     public void handleServerConnect(SocketChannel peer) throws IOException {
         this.slaves.put(getPeerPort(peer), peer);
         sendOK(peer);
@@ -76,16 +47,54 @@ public class Master extends Server {
     @Override
     public void handlePeerRequestUserConnect(SocketChannel peer, String result, SelectionKey key) throws IOException {
         HashMap<String, String> command = Parser.parseConnect(result);
-        System.out.println("proceeding uqer connect");
         if (db.getUserDB().isUsernameRegistered(command.get("username"))) {
             sendERROR(peer, "Username already used\r\n");
         } else {
             User connectedUser = new User(command.get("username"));
             db.getUserDB().addUser(connectedUser);
             db.getUsernamesClient().put(command.get("username"), (SocketChannel) key.channel());
-            db.getConnectedUsers().put(connectedUser, getPeerPort(peer));
+            db.addConnection(connectedUser, getPeerPort(peer));
             sendOK(peer);
         }
+    }
+
+    @Override
+    public void handlePeerRequestSubscribe(SocketChannel peer, String result) throws IOException {
+        HashMap<String, String> command = Parser.parsePeerRequestSubscribe(result);
+        if(command.containsKey("toTag")){
+            if (!db.getTags().contains(command.get("toTag"))) db.getTags().add(command.get("toTag"));
+            db.getUserDB().computeTagFollow(command.get("toTag"), db.getUserDB().getUserByUsername(command.get("user")));
+            sendOK(peer);
+        }else{
+            if (!db.getUserDB().isUsernameRegistered(command.get("user")) || ! db.getUserDB().isUsernameRegistered(command.get("to")))
+                sendERROR(peer, "Username does not exist\r\n");
+            else {
+                db.getUserDB().computeUserFollow(command.get("user"), command.get("to"));
+                sendOK(peer);
+            }
+        }
+    }
+
+    @Override
+    public void handlePeerRequestUnsubscribe(SocketChannel peer, String result) throws IOException {
+        HashMap<String, String> command = Parser.parsePeerRequestSubscribe(result);
+        if(command.containsKey("toTag")){
+            if (!db.getTags().contains(command.get("toTag"))) db.getTags().add(command.get("toTag"));
+            db.getUserDB().computeTagUnfollow(command.get("toTag"), db.getUserDB().getUserByUsername(command.get("user")));
+            sendOK(peer);
+        }else{
+            if (!db.getUserDB().isUsernameRegistered(command.get("user")))
+                sendERROR(peer, "Username does not exist\r\n");
+            else {
+                db.getUserDB().computeUserUnfollow(command.get("user"), command.get("to"));
+                sendOK(peer);
+            }
+        }
+    }
+
+    @Override
+    public void handleNotificationRequest(String result) {
+
     }
 
     @Override
@@ -101,10 +110,57 @@ public class Master extends Server {
 
     @Override
     public void notifyFollowers(User author, Message message) {
+        List<String> followersUsernames = db.getUserDB().getFollowersUsernames(author);
+        List<String> tagFollowersUsernames = new ArrayList<>();
+        for (String tag : message.getTags()) {
+            tagFollowersUsernames.addAll(db.getUserDB().getTagFollowersUsernames(tag));
+        }
+        for (String username : followersUsernames) {
+            if(db.isUserConnectedToSlave(db.getUserDB().getUserByUsername(username)))sendNotificationRequest(message, username);
+            else{
+                SocketChannel client = db.getUsernamesClient().get(username);
+                ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
+                try {
+                    client.write(buffer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                buffer.clear();
+            }
+        }
+        for (String username : tagFollowersUsernames) {
+            if (followersUsernames.contains(username)) continue;
+            if(db.isUserConnectedToSlave(db.getUserDB().getUserByUsername(username))) sendNotificationRequest(message, username);
+            else{
+                SocketChannel client = db.getUsernamesClient().get(username);
+                ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
+                try {
+                    client.write(buffer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                buffer.clear();
+            }
+        }
+    }
 
+    private void sendNotificationRequest(Message message, String username) {
+        SocketChannel slave = slaves.get(db.getConnectedUsers().get(db.getUserDB().getUserByUsername(username)));
+        String response = "NOTIFY user:" + username + "\r\n" + responseMSG(message.getId());
+        ByteBuffer buffer = ByteBuffer.wrap(response.getBytes());
+        try {
+            slave.write(buffer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        buffer.clear();
     }
 
     public int getPeerPort(SocketChannel peer) throws IOException {
         return ((InetSocketAddress) peer.getRemoteAddress()).getPort();
+    }
+
+    private boolean isSlave(SocketChannel slave){
+        return slaves.containsValue(slave);
     }
 }

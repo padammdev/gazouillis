@@ -11,8 +11,8 @@ import static client.Client.OK;
 
 public class Publisher extends RequestClient {
 
-    public Publisher(String username) {
-        super(username);
+    public Publisher(String username, int port) {
+        super(username, port);
     }
 
     @Override

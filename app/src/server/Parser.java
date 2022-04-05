@@ -93,19 +93,29 @@ public class Parser {
         return parsedCommand;
     }
 
-    public static HashMap<String, String> parseServerConnect(String command){
-        HashMap<String,String> parsedCommand = new HashMap<>();
+    public static HashMap<String, String> parsePeerRequestSubscribe(String command){
+        HashMap<String, String> parsedCommand = new HashMap<>();
         String[] commandSplit = command.split("\r\n");
         String[] header = commandSplit[0].split(" ");
         parsedCommand.put("Type", header[0]);
+        parsedCommand.put("user", header[1].substring(header[1].indexOf("@")));
+        if(header[2].contains("toTag")) parsedCommand.put("toTag", header[2].substring(header[2].indexOf("#")));
+        else parsedCommand.put("to", header[2].substring(header[2].indexOf("@")));
         return parsedCommand;
     }
 
-    public static HashMap<String, String> parsePeerRequestID(String command){
-        HashMap<String,String> parsedCommand = new HashMap<>();
+    public static HashMap<String, String> parseNotificationRequest(String command){
+        HashMap<String, String> parsedCommand = new HashMap<>();
         String[] commandSplit = command.split("\r\n");
         String[] header = commandSplit[0].split(" ");
         parsedCommand.put("Type", header[0]);
+        parsedCommand.put("user", header[1].substring(header[1].indexOf("@")));
+        StringBuilder body = new StringBuilder();
+        for (int i = 1; i < commandSplit.length ; i++) {
+            body.append(commandSplit[i]);
+        }
+        parsedCommand.put("body", body.toString());
         return parsedCommand;
     }
+
 }

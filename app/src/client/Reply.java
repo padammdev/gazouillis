@@ -9,12 +9,13 @@ import static client.Client.OK;
 
 public class Reply extends RequestClient {
 
-    public Reply(String username) {
-        super(username);
+    long id;
+    boolean isOk;
+
+    public Reply(String username, int port) {
+        super(username, port);
     }
 
-    boolean isOk = false;
-    long id;
     @Override
     public String getCommand() {
 

@@ -11,8 +11,8 @@ import static client.Client.OK;
 public class Republish extends RequestClient {
 
 
-    public Republish(String username) {
-        super(username);
+    public Republish(String username, int port) {
+        super(username, port);
     }
 
     boolean isOk = false;

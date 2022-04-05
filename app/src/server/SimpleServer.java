@@ -25,59 +25,6 @@ public class SimpleServer extends Server implements RequestHandler {
     }
 
 
-    public void handleRepublish(SocketChannel client, String result) throws IOException {
-        ByteBuffer buffer;
-        HashMap<String, String> parserRepublish = Parser.parseRepublish(result);
-        if (db.getUserDB().isUsernameRegistered(parserRepublish.get("author")) && db.getIdMessage().containsKey(Long.parseLong(parserRepublish.get("id")))) {
-            sendOK(client);
-        }else{
-            sendERROR(client,"Invalid ID or unknwon ID");
-        }
-
-
-    }
-
-    @Override
-    public void handlePeerRequestID(SocketChannel peer) throws IOException {
-
-    }
-
-    @Override
-    public void handleServerConnect(SocketChannel peer) throws IOException {
-
-    }
-
-    @Override
-    public void handlePeerRequestUserConnect(SocketChannel peer, String result, SelectionKey key) throws IOException {
-
-    }
-
-
-    public void handleReply(SocketChannel client, String result) throws IOException {
-        ByteBuffer buffer;
-        HashMap<String, String> command_reply = Parser.parseReply(result);
-
-        long id_reply = generateID();
-        User user_reply = db.getUserDB().getUserByUsername(command_reply.get("author"));
-        Message message_reply = new Message(command_reply.get("core"), id_reply, user_reply);
-
-        db.getMessages().add(message_reply);
-        db.getIdMessage().put(id_reply, message_reply);
-
-
-        /*** verification of the message being replied to ***/
-        if (db.getIdMessage().containsKey(Long.parseLong(command_reply.get("id")))) {
-            db.getUserDB().addMessage(user_reply, id_reply);
-            buffer = ByteBuffer.wrap(command_reply.get("core").getBytes());
-            client.write(buffer);
-            buffer.clear();
-            buffer.flip();
-        }
-
-        buffer = ByteBuffer.wrap("OK\r\n".getBytes());
-        client.write(buffer);
-    }
-
     public void handleUnsubscribe(SelectionKey key, SocketChannel client, String result) throws IOException {
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         HashMap<String, String> command = Parser.parseSubscribe(result);
@@ -96,8 +43,32 @@ public class SimpleServer extends Server implements RequestHandler {
         client.write(buffer);
     }
 
+    @Override
+    public void handleServerConnect(SocketChannel peer) throws IOException {
+
+    }
+
+    @Override
+    public void handlePeerRequestUserConnect(SocketChannel peer, String result, SelectionKey key) throws IOException {
+
+    }
+
+    @Override
+    public void handlePeerRequestSubscribe(SocketChannel peer, String result) throws IOException {
+
+    }
+
+    @Override
+    public void handlePeerRequestUnsubscribe(SocketChannel peer, String result) throws IOException {
+
+    }
+
+    @Override
+    public void handleNotificationRequest(String result) {
+
+    }
+
     public void handleSubscribe(SelectionKey key, SocketChannel client, String result) throws IOException {
-        ByteBuffer buffer = ByteBuffer.allocate(1024);
         HashMap<String, String> command = Parser.parseSubscribe(result);
         if (command.containsKey("user")) {
             if (!db.getUserDB().isUsernameRegistered(command.get("user")))
@@ -111,52 +82,6 @@ public class SimpleServer extends Server implements RequestHandler {
             db.getUserDB().computeTagFollow(command.get("tag"), db.getUserDB().getUserByUsername((String) key.attachment()));
             sendOK(client);
         }
-    }
-
-
-    public void handleRCVMSG(SocketChannel client, String result) throws IOException {
-        ByteBuffer buffer;
-        HashMap<String, String> command = Parser.parseRCVMSG(result);
-        long idMsg = Long.parseLong(command.get("Msg_id"));
-        if (!db.getIdMessage().containsKey(idMsg)) {
-            sendERROR(client, "Unknown message id : " + idMsg + "\r\n");
-        } else {
-            //list_id_message.put(id_msg,message.getCore());
-            System.out.println(responseMSG(idMsg));
-            buffer = ByteBuffer.wrap(responseMSG(idMsg).getBytes());
-            client.write(buffer);
-        }
-    }
-
-    public void handleRCVIDS(SocketChannel client, String result) throws IOException {
-        ByteBuffer buffer;
-        HashMap<String, String> command = Parser.parseRCVIDS(result);
-        buffer = ByteBuffer.wrap(responseMSGIDS(
-                        command.get("author"),
-                        command.get("tag"),
-                        command.get("sinceID") == null ? 0 : Long.parseLong(command.get("sinceId")),
-                        command.get("limit") == null ? 5 : Integer.parseInt(command.get("limit"))
-                ).getBytes()
-        );
-        client.write(buffer);
-    }
-
-    public void handlePublish(SocketChannel client, String result) throws IOException {
-        HashMap<String, String> command = Parser.parsePublish(result);
-        User author = new User(command.get("author"));
-        long id = generateID();
-        System.out.println("Message id: " + id + " from " + command.get("author"));
-        Message message = new Message(command.get("core"), id, author);
-        if (message.getTags() != null) db.getTags().addAll(message.getTags());
-
-        db.getUserDB().addMessage(author, id);
-
-        db.getIdMessage().put(id, message);
-
-        System.out.println(message.getCore());
-        sendOK(client);
-
-        notifyFollowers(db.getUserDB().getUserByUsername(command.get("author")), message);
     }
 
     @Override
@@ -188,6 +113,8 @@ public class SimpleServer extends Server implements RequestHandler {
             buffer.clear();
         }
     }
+
+
 
 
 }

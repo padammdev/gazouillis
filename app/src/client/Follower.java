@@ -13,8 +13,8 @@ import static client.Client.MSG_IDS;
 public class Follower extends RequestClient {
 
 
-    public Follower(String username) {
-        super(username);
+    public Follower(String username, int port) {
+        super(username, port);
     }
 
     public void run() throws IOException, InterruptedException {
