@@ -25,11 +25,6 @@ public class Master extends Server {
         this.port = port;
         this.slaves = new HashMap<>();
     }
-
-
-
-
-
     @Override
     public void handleSubscribe(SelectionKey key, SocketChannel client, String result) throws IOException {
 
@@ -110,7 +105,7 @@ public class Master extends Server {
     }
 
 
-    @Override
+    /*@Override
     public void notifyFollowers(User author, Message message) {
         List<String> followersUsernames = db.getUserDB().getFollowersUsernames(author);
         List<String> tagFollowersUsernames = new ArrayList<>();
@@ -144,7 +139,7 @@ public class Master extends Server {
                 buffer.clear();
             }
         }
-    }
+    }*/
 
     private void sendNotificationRequest(Message message, String username) {
         SocketChannel slave = slaves.get(db.getConnectedUsers().get(db.getUserDB().getUserByUsername(username)));

@@ -119,8 +119,37 @@ public abstract class Server implements RequestHandler{
                 }
                 iterator.remove();
             }
-            JSONDatabase.export(db);
+            //JSONDatabase.export(db);
 
+        }
+    }
+
+    public void notifyFollowers(User author, Message message) {
+        List<String> followersUsernames = db.getUserDB().getFollowersUsernames(author);
+        List<String> tagFollowersUsernames = new ArrayList<>();
+        for (String tag : message.getTags()) {
+            tagFollowersUsernames.addAll(db.getUserDB().getTagFollowersUsernames(tag));
+        }
+        for (String username : followersUsernames) {
+            SocketChannel client = db.getUsernamesClient().get(username);
+            ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
+            try {
+                client.write(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            buffer.clear();
+        }
+        for (String username : tagFollowersUsernames) {
+            if (followersUsernames.contains(username)) continue;
+            SocketChannel client = db.getUsernamesClient().get(username);
+            ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
+            try {
+                client.write(buffer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            buffer.clear();
         }
     }
 
@@ -168,7 +197,7 @@ public abstract class Server implements RequestHandler{
         return response.toString();
     }
 
-    public abstract void notifyFollowers(User author, Message message);
+    //public abstract void notifyFollowers(User author, Message message);
 
     public void sendOK(SocketChannel client){
         try {

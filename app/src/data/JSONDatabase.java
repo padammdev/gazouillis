@@ -22,8 +22,6 @@ public class JSONDatabase {
         users.put(new JSONObject(db.getUserDB().getUsernames()));
         users.put(new JSONObject(db.getUserDB().getFollowedTags()));
 
-        database.putAll(messages);
-        database.putAll(tags);
         database.put(idMessages);
         database.put(usernamesClient);
         database.put(connectedUser);
