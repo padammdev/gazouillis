@@ -10,7 +10,7 @@ import static client.Client.OK;
 public class Reply extends RequestClient {
 
     long id;
-    boolean isOk;
+    boolean isOk = false;
 
     public Reply(String username, int port) {
         super(username, port);
@@ -27,6 +27,7 @@ public class Reply extends RequestClient {
                     this.id = scanner.nextLong();
                     isOk = true;
                 }
+
             } while (!isOk);
         }
         catch(NumberFormatException e){
@@ -55,7 +56,7 @@ public class Reply extends RequestClient {
             buffer.flip();
             buffer.clear();
 
-            System.out.println(response);
+            //System.out.println(response);
 
             /*** Close connexion ***/
             if (response.contains(OK)) {

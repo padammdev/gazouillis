@@ -31,9 +31,6 @@ public class Json {
         file.flush();
     }
 
-
-
-
     //add message published
 
     //add follower

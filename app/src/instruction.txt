@@ -1,0 +1,58 @@
+Publish :
+
+premier client : @user1
+
+message : "Ceci est le premier message de user1"
+
+second client : @user2
+
+message : "Ceci est le premier message de user2"
+
+message trop long:
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+
+Recent message:
+
+@user1
+
+@user2
+
+On voit bien que les messages n'ont pas le même id
+
+Republish:
+
+@user1 , @user2
+on republie les 2 msg (1 et 2)
+
+Reply: (j'ai fais expres de laisser le retour 2 fois)
+
+
+@user1
+2
+Reply msg2
+
+@user2
+1
+Reply msg1
+
+Subscrive:
+dans user1:
+@user2
+Republier un msg pour voir la notif sur user1
+
+Unsub:
+@user1
+@user2
+
+publier un msg pour montrer que les utilsateurs ne reçoivent plus les notifs.
+
+
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
+Fédération 
+
+lancer 1 deuxième server 
+connecté 1 user dessus et montrer que seulement ce server reçois les requêtes
+
+
+

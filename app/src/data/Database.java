@@ -1,5 +1,7 @@
 package data;
 
+import org.json.JSONObject;
+
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +48,8 @@ public class Database {
     public void setConnectedUsers(HashMap<User, Integer> connectedUsers) {
         this.connectedUsers = connectedUsers;
     }
+
+
 
     public HashMap<Long, Message> getIdMessage() {
         return idMessage;

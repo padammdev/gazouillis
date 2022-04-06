@@ -38,6 +38,9 @@ public class JSONDatabase {
         FileReader fileReader = new FileReader("app/src/data/db.json");
         JSONTokener token = new JSONTokener(fileReader);
         JSONArray database = new JSONArray(token);
+        JSONArray user = (JSONArray) database.get(0);
+
+        database.get(1);
 
         return db;
     }
