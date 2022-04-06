@@ -28,6 +28,8 @@ public class Master extends Server {
 
 
 
+
+
     @Override
     public void handleSubscribe(SelectionKey key, SocketChannel client, String result) throws IOException {
 

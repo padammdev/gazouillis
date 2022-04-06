@@ -25,6 +25,14 @@ public class Message {
         republished = false;
     }
 
+    public Message(String core, long id, User author, ArrayList<String> tags, boolean republished) {
+        this.core = core;
+        this.id = id;
+        this.author = author;
+        this.tags = tags;
+        this.republished = republished;
+    }
+
     public String getCore() {
         return core;
     }
@@ -58,4 +66,24 @@ public class Message {
         return tags.size()>0;
     }
 
+    @Override
+    public String toString() {
+        return "{" +
+               "\"core\":" + core +
+               ", \"id\": " + id +
+               ", \"author\":" + author +
+               ", \"tags\":" + tagsToString() +
+               ", \"republished\":" + republished +
+               '}';
+    }
+
+    private String tagsToString(){
+        StringBuilder string = new StringBuilder("[");
+        for(String tag : tags){
+            string.append("\"").append(tag).append("\",");
+        }
+        string = new StringBuilder(string.substring(0, string.length() - 1));
+        string.append("]");
+        return string.toString();
+    }
 }

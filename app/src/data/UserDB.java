@@ -95,9 +95,21 @@ public class UserDB {
     @Override
     public String toString() {
         return "UserDB{" +
-               "usernames=" + usernames +
-               ", messages=" + messages +
-               ", followedTags=" + followedTags +
+               "\"usernames\":" + usernames +
+               ", \"messages\":" + messages +
+               ", \"followedTags\":" + followedTags +
                '}';
+    }
+
+    public HashMap<String, User> getUsernames() {
+        return usernames;
+    }
+
+    public HashMap<User, List<Long>> getMessages() {
+        return messages;
+    }
+
+    public HashMap<String, List<User>> getFollowedTags() {
+        return followedTags;
     }
 }

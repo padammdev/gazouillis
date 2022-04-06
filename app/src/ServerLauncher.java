@@ -1,8 +1,5 @@
-import data.Database;
-import server.Master;
 import server.Server;
 import server.SimpleServer;
-import server.Slave;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -15,9 +12,10 @@ public class ServerLauncher {
 
 
         try {
-            new SimpleServer().start();
-            /*
             Server server;
+            server = new SimpleServer();
+            server.start();
+            /*
             if(configurationHandler.hasMaster()){
                 server = new Slave(localhost, new InetSocketAddress("localhost", configurationHandler.getMasterPort()), port, new Database());
             }
@@ -26,9 +24,10 @@ public class ServerLauncher {
             }
             configurationHandler.addServer(server);
             configurationHandler.write();
-            server.start();
-            */
+            server.start();*/
+
         } catch (IOException e) {
+
             e.printStackTrace();
         }
     }

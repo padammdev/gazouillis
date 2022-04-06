@@ -20,7 +20,7 @@ public class Client {
     static String message;
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        System.out.println("Which port you want to connect ?");
+        System.out.println("Which port do you want to be connected to ?");
         Scanner scannerPort = new Scanner(System.in);
         int port = scannerPort.nextInt();
         InetAddress address = InetAddress.getByName("localhost");

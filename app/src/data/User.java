@@ -27,10 +27,10 @@ public class User {
 
     @Override
     public String toString() {
-        return "User{" +
-               "username='" + username + '\'' +
-               ", follows=" + follows +
-               ", followers=" + followers +
+        return "{" +
+               "\"username\":'" + username +
+               ", \"follows\":" + followsToString() +
+               ", \"followers\":" + followersToString() +
                '}';
     }
 
@@ -67,5 +67,23 @@ public class User {
 
     public void removeFollow(User user){
         this.follows.remove(user);
+    }
+
+    private String followersToString(){
+        return getString(followers);
+    }
+
+    private String followsToString(){
+        return getString(follows);
+    }
+
+    private String getString(HashSet<User> follows) {
+        StringBuilder string = new StringBuilder("[");
+        for(User follower : follows){
+            string.append("\"").append(follower.getUsername()).append("\",");
+        }
+        string = new StringBuilder(string.substring(0, string.length() - 1));
+        string.append("]");
+        return string.toString();
     }
 }

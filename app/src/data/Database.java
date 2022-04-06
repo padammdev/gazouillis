@@ -23,6 +23,30 @@ public class Database {
         connectedUsers = new HashMap<>();
     }
 
+    public void setIdMessage(HashMap<Long, Message> idMessage) {
+        this.idMessage = idMessage;
+    }
+
+    public void setLastId(long lastId) {
+        this.lastId = lastId;
+    }
+
+    public void setUsernamesClient(HashMap<String, SocketChannel> usernamesClient) {
+        this.usernamesClient = usernamesClient;
+    }
+
+    public void setMessages(ArrayList<Message> messages) {
+        this.messages = messages;
+    }
+
+    public void setTags(ArrayList<String> tags) {
+        this.tags = tags;
+    }
+
+    public void setConnectedUsers(HashMap<User, Integer> connectedUsers) {
+        this.connectedUsers = connectedUsers;
+    }
+
     public HashMap<Long, Message> getIdMessage() {
         return idMessage;
     }
@@ -61,5 +85,18 @@ public class Database {
 
     public boolean isUserConnectedToSlave(User user){
         return connectedUsers.containsKey(user);
+    }
+
+    @Override
+    public String toString() {
+        return "Database{" +
+               "idMessage=" + idMessage +
+               ", userDB=" + userDB +
+               ", lastId=" + lastId +
+               ", usernamesClient=" + usernamesClient +
+               ", messages=" + messages +
+               ", tags=" + tags +
+               ", connectedUsers=" + connectedUsers +
+               '}';
     }
 }

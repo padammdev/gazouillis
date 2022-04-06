@@ -1,6 +1,7 @@
 package server;
 
 import data.Database;
+import data.JSONDatabase;
 import data.Message;
 import data.User;
 
@@ -24,6 +25,10 @@ public abstract class Server implements RequestHandler{
     InetSocketAddress localhost;
     int port;
 
+    public Database getDb() {
+        return db;
+    }
+
     public Server() {
         this.db = new Database();
     }
@@ -41,8 +46,6 @@ public abstract class Server implements RequestHandler{
             selector.select();
             Set<SelectionKey> selectionKeySet = selector.selectedKeys();
             Iterator<SelectionKey> iterator = selectionKeySet.iterator();
-
-
             while (iterator.hasNext()) {
                 SelectionKey key = iterator.next();
 
@@ -116,6 +119,7 @@ public abstract class Server implements RequestHandler{
                 }
                 iterator.remove();
             }
+            JSONDatabase.export(db);
 
         }
     }
