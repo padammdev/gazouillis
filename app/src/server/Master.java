@@ -18,13 +18,32 @@ import java.util.List;
 public class Master extends Server {
 
     HashMap<Integer, SocketChannel> slaves;
+    HashMap<String, SocketChannel> usernamesClient;
 
     public Master(InetSocketAddress address, Database db, int port) {
         super(db);
         localhost = address;
         this.port = port;
         this.slaves = new HashMap<>();
+        usernamesClient = new HashMap<>();
     }
+
+    @Override
+    public void handleConnect(SelectionKey key, SocketChannel client, String result) throws IOException {
+        HashMap<String, String> command = Parser.parseConnect(result);
+        if (db.getUserDB().isUsernameRegistered(command.get("username"))) {
+            sendERROR(client, "Username already used\r\n");
+        } else {
+            User connectedUser = new User(command.get("username"));
+            db.getUserDB().addUser(connectedUser);
+            sendOK(client);
+        }
+
+        key.attach(command.get("username"));
+        usernamesClient.put(command.get("username"), (SocketChannel) key.channel());
+        System.out.println("Client Connected");
+    }
+
     @Override
     public void handleSubscribe(SelectionKey key, SocketChannel client, String result) throws IOException {
 
@@ -49,7 +68,6 @@ public class Master extends Server {
         } else {
             User connectedUser = new User(command.get("username"));
             db.getUserDB().addUser(connectedUser);
-            db.getUsernamesClient().put(command.get("username"), (SocketChannel) key.channel());
             db.addConnection(connectedUser, getPeerPort(peer));
             sendOK(peer);
         }
@@ -105,7 +123,7 @@ public class Master extends Server {
     }
 
 
-    /*@Override
+    @Override
     public void notifyFollowers(User author, Message message) {
         List<String> followersUsernames = db.getUserDB().getFollowersUsernames(author);
         List<String> tagFollowersUsernames = new ArrayList<>();
@@ -139,7 +157,7 @@ public class Master extends Server {
                 buffer.clear();
             }
         }
-    }*/
+    }
 
     private void sendNotificationRequest(Message message, String username) {
         SocketChannel slave = slaves.get(db.getConnectedUsers().get(db.getUserDB().getUserByUsername(username)));

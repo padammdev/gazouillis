@@ -19,12 +19,14 @@ public class Slave extends Server{
 
     SocketChannel toMaster;
     SocketAddress masterAddress;
+    HashMap<String, SocketChannel> usernamesClient;
 
     public Slave(InetSocketAddress address, SocketAddress masterAddress, int port, Database db) throws IOException {
         super(db);
         localhost = address;
         this.port = port;
         this.masterAddress = masterAddress;
+        usernamesClient = new HashMap<>();
     }
 
     @Override
@@ -103,8 +105,13 @@ public class Slave extends Server{
     }
 
     @Override
-    public void handleNotificationRequest(String result) {
-        HashMap<String, String> parsedCommand = Parser.parseNotificationRequest(result);
+    public void handleNotificationRequest(String result) throws IOException {
+        HashMap<String, String> command = Parser.parseNotificationRequest(result);
+        String username  = command.get("user");
+        SocketChannel client = usernamesClient.get(username);
+        ByteBuffer buffer = ByteBuffer.wrap(command.get("body").getBytes(StandardCharsets.UTF_8));
+        client.write(buffer);
+        buffer.clear();
     }
 
     @Override
@@ -118,6 +125,7 @@ public class Slave extends Server{
         ssc.configureBlocking(false);
         selector = Selector.open();
         ssc.register(selector, SelectionKey.OP_ACCEPT);
+        toMaster.register(selector, SelectionKey.OP_ACCEPT);
         System.out.println("Server" + response);
     }
 
@@ -128,6 +136,7 @@ public class Slave extends Server{
         String response = writeToMaster(register);
         if(response.contains(OK)){
             key.attach(parsedCommand.get("username"));
+            usernamesClient.put(parsedCommand.get("username"), (SocketChannel) key.channel());
             sendOK(client);
         }
         else{

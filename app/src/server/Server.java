@@ -124,35 +124,7 @@ public abstract class Server implements RequestHandler{
         }
     }
 
-    public void notifyFollowers(User author, Message message) {
-        List<String> followersUsernames = db.getUserDB().getFollowersUsernames(author);
-        List<String> tagFollowersUsernames = new ArrayList<>();
-        for (String tag : message.getTags()) {
-            tagFollowersUsernames.addAll(db.getUserDB().getTagFollowersUsernames(tag));
-        }
-        for (String username : followersUsernames) {
-            SocketChannel client = db.getUsernamesClient().get(username);
-            ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
-            try {
-                client.write(buffer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            buffer.clear();
-        }
-        for (String username : tagFollowersUsernames) {
-            if (followersUsernames.contains(username)) continue;
-            SocketChannel client = db.getUsernamesClient().get(username);
-            ByteBuffer buffer = ByteBuffer.wrap(responseMSG(message.getId()).getBytes());
-            try {
-                client.write(buffer);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            buffer.clear();
-        }
-    }
-
+    public abstract void notifyFollowers(User author, Message message);
     public long generateID() {
         return db.generateID();
     }
@@ -258,7 +230,6 @@ public abstract class Server implements RequestHandler{
 
         System.out.println(message.getCore());
         sendOK(client);
-
         notifyFollowers(db.getUserDB().getUserByUsername(command.get("author")), message);
     }
 

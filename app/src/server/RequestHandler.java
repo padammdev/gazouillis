@@ -18,5 +18,5 @@ public interface RequestHandler {
     void handlePeerRequestUserConnect(SocketChannel peer, String result, SelectionKey key) throws IOException;
     void handlePeerRequestSubscribe(SocketChannel peer, String result) throws IOException;
     void handlePeerRequestUnsubscribe(SocketChannel peer, String result) throws IOException;
-    void handleNotificationRequest(String result);
+    void handleNotificationRequest(String result) throws IOException;
 }
